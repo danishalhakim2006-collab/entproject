@@ -73,21 +73,21 @@ app.get('/api/orders/export', async (req, res) => {
     res.end();
 });
 
-// ================= PAGE ROUTES (EXPLICIT) =================
+// ================= PAGE ROUTES (PASTIKAN BAGIAN INI SAMA) =================
 
-// Buka link utama terus ke Customer Order Form
+// Paksa halaman utama (/) langsung membuka borang pelanggan
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
-// Buka link /index.html ke Customer Order Form
+// Paksa link /index.html membuka borang pelanggan
 app.get('/index.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
-// Buka link /admin.html ke Admin Dashboard
+// Link khusus admin dashboard
 app.get('/admin.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
+    res.sendFile(path.resolve(__dirname, 'admin.html'));
 });
 
 // Start Server
