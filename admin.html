@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENTPROJECT - Admin Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f8fafc; }
+        h2 { color: #1e293b; }
+        .btn-export { background-color: #10b981; color: white; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; margin-bottom: 20px; }
+        .btn-export:hover { background-color: #059669; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .btn-delete:hover { background-color: #dc2626; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background-color: #1e293b; color: white; }
+        tr:hover { background-color: #f1f5f9; }
+    </style>
+</head>
+<body>
+
+    <h2>📊 ENTPROJECT Admin Dashboard</h2>
+    <a href="http://localhost:5000/api/orders/export" class="btn-export">📥 Export to Excel (.xlsx)</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date & Time</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Cake Choc Moist</th>
+                <th>Soft Cookies</th>
+                <th>Total (RM)</th>
+                <th>Payment</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="ordersTable">
+            <tr><td colspan="10" style="text-align: center;">Loading orders...</td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchOrders() {
+            try {
+                const res = await fetch('http://localhost:5000/api/orders');
+                const data = await res.json();
+                
+                const tableBody = document.getElementById('ordersTable');
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">No orders placed yet.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = data.map(o => `
+                    <tr>
+                        <td><b>${o.order_id}</b></td>
+                        <td>${o.created_at}</td>
+                        <td>${o.customer_name}</td>
+                        <td>${o.phone_number}</td>
+                        <td>${o.delivery_address}</td>
+                        <td>${o.cake_choc_moist_qty}</td>
+                        <td>${o.soft_cookies_qty}</td>
+                        <td><b>RM ${o.total_price.toFixed(2)}</b></td>
+                        <td><span style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px; font-size: 12px;">${o.payment_method}</span></td>
+                        <td>
+                            <button class="btn-delete" onclick="deleteOrder('${o.order_id}')">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function deleteOrder(orderId) {
+            if (confirm(`Are you sure you want to delete order ${orderId}?`)) {
+                try {
+                    const res = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        fetchOrders(); // Refresh senarai selepas padam
+                    } else {
+                        alert('Failed to delete order.');
+                    }
+                } catch (err) {
+                    alert('Error connecting to server.');
+                }
+            }
+        }
+
+        fetchOrders();
+        // Auto-refresh setiap 5 saat
+        setInterval(fetchOrders, 5000);
+    </script>
+</body>
+</html>
