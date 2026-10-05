@@ -1,64 +1,325 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENTPROJECT - Borang Pesanan</title>
+    <title>ENTPROJECT - Customer Order Form</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; }
-        label { font-weight: bold; display: block; margin-top: 10px; }
-        input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; margin-top: 20px; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
-        button:hover { background-color: #218838; }
-        .total { font-size: 18px; font-weight: bold; margin-top: 15px; color: #d9534f; }
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+            --input-bg: #ffffff;
+            --primary-btn: #16a34a;
+            --primary-btn-hover: #15803d;
+            --subtext: #64748b;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --border-color: #334155;
+            --input-bg: #0f172a;
+            --primary-btn: #22c55e;
+            --primary-btn-hover: #16a34a;
+            --subtext: #94a3b8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-top: 14px;
+            font-size: 14px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .total {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #dc2626;
+            text-align: right;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button.btn-action {
+            flex: 1;
+            padding: 12px;
+            background-color: var(--primary-btn);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button.btn-action:hover {
+            background-color: var(--primary-btn-hover);
+        }
+
+        button.btn-secondary {
+            background-color: #64748b;
+        }
+
+        button.btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        .step { display: none; }
+        .step.active { display: block; }
+
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .payment-option {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .payment-option input {
+            width: auto;
+            margin: 0;
+        }
+
+        .qr-box {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+        }
+
+        .qr-box img {
+            max-width: 180px;
+            border-radius: 8px;
+        }
+
+        .success-box {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .success-box h3 {
+            color: #16a34a;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Borang Pesanan Customer</h2>
+    <div class="header">
+        <h2 id="pageTitle">Customer Order Form</h2>
+        <button type="button" class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+    </div>
+
     <form id="orderForm">
-        <label>Nama Customer:</label>
-        <input type="text" id="name" required placeholder="Masukkan nama anda">
+        <!-- STEP 1: Details & Selection -->
+        <div class="step active" id="step1">
+            <label>Customer Name:</label>
+            <input type="text" id="name" required placeholder="Enter your full name">
 
-        <label>Nombor Telefon:</label>
-        <input type="tel" id="phone" required placeholder="Contoh: 0123456789">
+            <label>Phone Number:</label>
+            <input type="tel" id="phone" required placeholder="e.g. 0123456789">
 
-        <label>Alamat Penghantaran:</label>
-        <textarea id="address" rows="3" required placeholder="Masukkan alamat lengkap"></textarea>
+            <label>Delivery Address:</label>
+            <textarea id="address" rows="3" required placeholder="Enter your complete address"></textarea>
 
-        <label>Choc Moist Cake (RM 15 / unit):</label>
-        <input type="number" id="cakeQty" min="0" value="0" oninput="calculateTotal()">
+            <label>Cake Choc Moist (RM 3.50 / unit):</label>
+            <input type="number" id="cakeQty" min="0" value="0" step="1" oninput="calculateTotal()">
 
-        <label>Soft Cookies (RM 10 / pack):</label>
-        <input type="number" id="cookieQty" min="0" value="0" oninput="calculateTotal()">
+            <label>Soft Cookies (RM 2.00 / pack):</label>
+            <input type="number" id="cookieQty" min="0" value="0" step="1" oninput="calculateTotal()">
 
-        <div class="total">Jumlah Akhir: RM <span id="totalPrice">0</span></div>
+            <div class="total">Total Price: RM <span id="totalPrice">0.00</span></div>
 
-        <button type="submit">Hantar Pesanan</button>
+            <div class="btn-group">
+                <button type="button" class="btn-action" onclick="goToStep(2)">Next</button>
+            </div>
+        </div>
+
+        <!-- STEP 2: Payment Options -->
+        <div class="step" id="step2">
+            <p style="color: var(--subtext); font-size: 14px;">Select your preferred payment method:</p>
+            
+            <div class="payment-options">
+                <label class="payment-option">
+                    <input type="radio" name="paymentMethod" value="COD" checked onclick="toggleQR(false)">
+                    <span>Cash on Delivery (COD)</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="paymentMethod" value="QR" onclick="toggleQR(true)">
+                    <span>QR Code Payment</span>
+                </label>
+            </div>
+
+            <div class="qr-box" id="qrContainer">
+                <p style="font-size: 13px; color: var(--subtext);">Scan the QR code below to pay:</p>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=ENTPROJECT_PAYMENT" alt="Payment QR Code">
+            </div>
+
+            <div class="total">Total Amount: RM <span id="paymentTotal">0.00</span></div>
+
+            <div class="btn-group">
+                <button type="button" class="btn-action btn-secondary" onclick="goToStep(1)">Back</button>
+                <button type="submit" class="btn-action">Confirm & Order</button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Order Successful -->
+        <div class="step" id="step3">
+            <div class="success-box">
+                <h3>Order Successful!</h3>
+                <p style="color: var(--subtext);">Thank you for ordering our products.</p>
+                <div class="btn-group" style="margin-top: 30px;">
+                    <button type="button" class="btn-action" onclick="resetForm()">Place New Order</button>
+                </div>
+            </div>
+        </div>
     </form>
 </div>
 
 <script>
+    let currentTheme = 'light';
+
+    function toggleTheme() {
+        if (currentTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeBtn').innerText = '☀️ Light Mode';
+            currentTheme = 'dark';
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            document.getElementById('themeBtn').innerText = '🌙 Dark Mode';
+            currentTheme = 'light';
+        }
+    }
+
     function calculateTotal() {
         const cakeQty = parseInt(document.getElementById('cakeQty').value) || 0;
         const cookieQty = parseInt(document.getElementById('cookieQty').value) || 0;
-        const total = (cakeQty * 15) + (cookieQty * 10);
-        document.getElementById('totalPrice').innerText = total;
+        const total = (cakeQty * 3.50) + (cookieQty * 2.00);
+        const formattedTotal = total.toFixed(2);
+        document.getElementById('totalPrice').innerText = formattedTotal;
+        document.getElementById('paymentTotal').innerText = formattedTotal;
+    }
+
+    function goToStep(stepNumber) {
+        if (stepNumber === 2) {
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const cakeQty = parseInt(document.getElementById('cakeQty').value) || 0;
+            const cookieQty = parseInt(document.getElementById('cookieQty').value) || 0;
+
+            if (!name || !phone || !address) {
+                alert('Please fill in all customer details before proceeding.');
+                return;
+            }
+
+            if (cakeQty === 0 && cookieQty === 0) {
+                alert('Please select at least one item to order.');
+                return;
+            }
+        }
+
+        document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+        document.getElementById('step' + stepNumber).classList.add('active');
+
+        if (stepNumber === 3) {
+            document.getElementById('pageTitle').style.display = 'none';
+        } else {
+            document.getElementById('pageTitle').style.display = 'block';
+        }
+    }
+
+    function toggleQR(show) {
+        document.getElementById('qrContainer').style.display = show ? 'block' : 'none';
     }
 
     document.getElementById('orderForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
         const data = {
             name: document.getElementById('name').value,
             phone: document.getElementById('phone').value,
             address: document.getElementById('address').value,
             cakeQty: document.getElementById('cakeQty').value,
             cookieQty: document.getElementById('cookieQty').value,
-            totalPrice: document.getElementById('totalPrice').innerText
+            totalPrice: document.getElementById('totalPrice').innerText,
+            paymentMethod: paymentMethod
         };
 
         try {
@@ -67,18 +328,23 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            
-            if(res.ok) {
-                alert('Pesanan anda telah berjaya dihantar!');
-                document.getElementById('orderForm').reset();
-                calculateTotal();
+
+            if (res.ok) {
+                goToStep(3);
             } else {
-                alert('Gagal menghantar pesanan.');
+                alert('Failed to submit order. Please try again.');
             }
         } catch (err) {
-            alert('Ralat sambungan ke server.');
+            alert('Server connection error.');
         }
     });
+
+    function resetForm() {
+        document.getElementById('orderForm').reset();
+        calculateTotal();
+        toggleQR(false);
+        goToStep(1);
+    }
 </script>
 
 </body>
