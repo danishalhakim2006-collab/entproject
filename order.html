@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENTPROJECT - Borang Pesanan</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; margin-top: 20px; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #218838; }
+        .total { font-size: 18px; font-weight: bold; margin-top: 15px; color: #d9534f; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Borang Pesanan Customer</h2>
+    <form id="orderForm">
+        <label>Nama Customer:</label>
+        <input type="text" id="name" required placeholder="Masukkan nama anda">
+
+        <label>Nombor Telefon:</label>
+        <input type="tel" id="phone" required placeholder="Contoh: 0123456789">
+
+        <label>Alamat Penghantaran:</label>
+        <textarea id="address" rows="3" required placeholder="Masukkan alamat lengkap"></textarea>
+
+        <label>Choc Moist Cake (RM 15 / unit):</label>
+        <input type="number" id="cakeQty" min="0" value="0" oninput="calculateTotal()">
+
+        <label>Soft Cookies (RM 10 / pack):</label>
+        <input type="number" id="cookieQty" min="0" value="0" oninput="calculateTotal()">
+
+        <div class="total">Jumlah Akhir: RM <span id="totalPrice">0</span></div>
+
+        <button type="submit">Hantar Pesanan</button>
+    </form>
+</div>
+
+<script>
+    function calculateTotal() {
+        const cakeQty = parseInt(document.getElementById('cakeQty').value) || 0;
+        const cookieQty = parseInt(document.getElementById('cookieQty').value) || 0;
+        const total = (cakeQty * 15) + (cookieQty * 10);
+        document.getElementById('totalPrice').innerText = total;
+    }
+
+    document.getElementById('orderForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const data = {
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value,
+            address: document.getElementById('address').value,
+            cakeQty: document.getElementById('cakeQty').value,
+            cookieQty: document.getElementById('cookieQty').value,
+            totalPrice: document.getElementById('totalPrice').innerText
+        };
+
+        try {
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if(res.ok) {
+                alert('Pesanan anda telah berjaya dihantar!');
+                document.getElementById('orderForm').reset();
+                calculateTotal();
+            } else {
+                alert('Gagal menghantar pesanan.');
+            }
+        } catch (err) {
+            alert('Ralat sambungan ke server.');
+        }
+    });
+</script>
+
+</body>
+</html>
