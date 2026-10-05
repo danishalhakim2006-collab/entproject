@@ -11,22 +11,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (index.html, admin.html, etc.)
+// Serve static files
 app.use(express.static(path.join(__dirname)));
 
-// Simpan data order dalam memory (temporary array)
+// Temporary in-memory order storage
 let orders = [];
 
 // ================= API ROUTES =================
 
-// 1. Route untuk dapatkan senarai order (GET)
 app.get('/api/orders', (req, res) => {
     res.json(orders);
 });
 
-// 2. Route untuk hantar order baru dari Customer (POST)
 app.post('/api/orders', (req, res) => {
-    const { name, phone, address, cakeQty, cookieQty, totalPrice } = req.body;
+    const { name, phone, address, cakeQty, cookieQty, totalPrice, paymentMethod } = req.body;
     
     const newOrder = {
         id: Date.now(),
@@ -36,52 +34,46 @@ app.post('/api/orders', (req, res) => {
         address,
         cakeQty: parseInt(cakeQty) || 0,
         cookieQty: parseInt(cookieQty) || 0,
-        totalPrice: parseFloat(totalPrice) || 0
+        totalPrice: parseFloat(totalPrice) || 0,
+        paymentMethod: paymentMethod || 'COD'
     };
 
     orders.push(newOrder);
-    res.status(201).json({ message: 'Order successfully placed!', order: newOrder });
+    res.status(201).json({ message: 'Order placed successfully!', order: newOrder });
 });
 
-// 3. Route untuk padam order dari Admin (DELETE)
 app.delete('/api/orders/:id', (req, res) => {
     const { id } = req.params;
     orders = orders.filter(order => order.id !== parseInt(id));
     res.json({ message: 'Order deleted successfully' });
 });
 
-// 4. Route untuk Export ke Excel (GET)
 app.get('/api/orders/export', async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Orders');
 
     worksheet.columns = [
-        { header: 'ID', key: 'id', width: 15 },
-        { header: 'Date', key: 'date', width: 20 },
+        { header: 'Order ID', key: 'id', width: 18 },
+        { header: 'Date & Time', key: 'date', width: 22 },
         { header: 'Customer Name', key: 'name', width: 25 },
-        { header: 'Phone Number', key: 'phone', width: 15 },
-        { header: 'Address', key: 'address', width: 30 },
-        { header: 'Choc Moist (Qty)', key: 'cakeQty', width: 18 },
-        { header: 'Soft Cookies (Qty)', key: 'cookieQty', width: 18 },
-        { header: 'Total Price (RM)', key: 'totalPrice', width: 15 }
+        { header: 'Phone Number', key: 'phone', width: 16 },
+        { header: 'Delivery Address', key: 'address', width: 32 },
+        { header: 'Cake Choc Moist (Qty)', key: 'cakeQty', width: 22 },
+        { header: 'Soft Cookies (Qty)', key: 'cookieQty', width: 20 },
+        { header: 'Total Price (RM)', key: 'totalPrice', width: 16 },
+        { header: 'Payment Method', key: 'paymentMethod', width: 18 }
     ];
 
     orders.forEach(order => worksheet.addRow(order));
 
-    res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader(
-        'Content-Disposition',
-        'attachment; filename=' + 'Entproject_Orders.xlsx'
-    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Entproject_Orders.xlsx');
 
     await workbook.xlsx.write(res);
     res.end();
 });
 
-// ================= PAGE ROUTES (FIXED) =================
+// ================= PAGE ROUTES (EXPLICIT) =================
 
 // Buka link utama terus ke Customer Order Form
 app.get('/', (req, res) => {
@@ -100,5 +92,5 @@ app.get('/admin.html', (req, res) => {
 
 // Start Server
 app.listen(PORT, () => {
-    console.log(`ENTPROJECT Server running on port ${PORT}`);
+    console.log(`ENTPROJECT server running on port ${PORT}`);
 });
