@@ -36,6 +36,45 @@
             transition: all 0.3s ease;
         }
 
+        /* Loading Screen (Shopee Style) */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-logo {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(0.95); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--subtext);
+            letter-spacing: 1px;
+        }
+
         .container {
             max-width: 500px;
             margin: 20px auto;
@@ -44,6 +83,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             position: relative;
+            display: none; /* Disembunyikan semasa loading */
         }
 
         .header {
@@ -87,6 +127,32 @@
             color: var(--text-color);
         }
 
+        .product-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .product-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-info label {
+            margin-top: 0;
+        }
+
         .total {
             font-size: 18px;
             font-weight: bold;
@@ -128,14 +194,14 @@
         .step { display: none; }
         .step.active { display: block; }
 
-        .payment-options {
+        .payment-options, .delivery-options {
             display: flex;
             flex-direction: column;
             gap: 12px;
             margin-top: 15px;
         }
 
-        .payment-option {
+        .payment-option, .delivery-option {
             border: 1px solid var(--border-color);
             padding: 12px;
             border-radius: 8px;
@@ -145,7 +211,7 @@
             cursor: pointer;
         }
 
-        .payment-option input {
+        .payment-option input, .delivery-option input {
             width: auto;
             margin: 0;
         }
@@ -178,7 +244,14 @@
 </head>
 <body>
 
-<div class="container">
+<!-- LOADING SCREEN -->
+<div id="loadingScreen">
+    <!-- Ganti link src di bawah dengan link gambar loading screen anda -->
+    <img src="https://via.placeholder.com/150?text=ENTPROJECT" alt="Loading Logo" class="loading-logo">
+    <div class="loading-text">Loading Entproject Store...</div>
+</div>
+
+<div class="container" id="mainContainer">
     <div class="header">
         <h2 id="pageTitle">Customer Order Form</h2>
         <button type="button" class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
@@ -196,13 +269,38 @@
             <label>Delivery Address:</label>
             <textarea id="address" rows="3" required placeholder="Enter your complete address"></textarea>
 
-            <label>Cake Choc Moist (RM 3.50 / unit):</label>
-            <input type="number" id="cakeQty" min="0" value="0" step="1" oninput="calculateTotal()">
+            <!-- Delivery / Fulfillment Option -->
+            <label>Fulfillment Method:</label>
+            <div class="delivery-options">
+                <label class="delivery-option">
+                    <input type="radio" name="fulfillment" value="COD" checked onclick="calculateTotal()">
+                    <span>Cash on Delivery (COD) - <b>RM 0.50</b></span>
+                </label>
+                <label class="delivery-option">
+                    <input type="radio" name="fulfillment" value="Pickup" onclick="calculateTotal()">
+                    <span>Self Pickup - <b>RM 0.00</b></span>
+                </label>
+            </div>
 
-            <label>Soft Cookies (RM 2.00 / pack):</label>
-            <input type="number" id="cookieQty" min="0" value="0" step="1" oninput="calculateTotal()">
+            <!-- Product 1: Choc Moist Cake -->
+            <div class="product-card">
+                <img src="https://via.placeholder.com/150?text=Choc+Cake" alt="Choc Moist Cake" class="product-img">
+                <div class="product-info">
+                    <label>Choc Moist Cake (1 pc @ RM 3.50)</label>
+                    <input type="number" id="cakeQty" min="0" value="0" step="1" oninput="calculateTotal()">
+                </div>
+            </div>
 
-            <div class="total">Total Price: RM <span id="totalPrice">0.00</span></div>
+            <!-- Product 2: Hokkaido Cupcake -->
+            <div class="product-card">
+                <img src="https://via.placeholder.com/150?text=Hokkaido" alt="Hokkaido Cupcake" class="product-img">
+                <div class="product-info">
+                    <label>Hokkaido Cupcake (1 set - 2 pcs @ RM 4.00)</label>
+                    <input type="number" id="cookieQty" min="0" value="0" step="1" oninput="calculateTotal()">
+                </div>
+            </div>
+
+            <div class="total">Total Price: RM <span id="totalPrice">0.50</span></div>
 
             <div class="btn-group">
                 <button type="button" class="btn-action" onclick="goToStep(2)">Next</button>
@@ -215,12 +313,12 @@
             
             <div class="payment-options">
                 <label class="payment-option">
-                    <input type="radio" name="paymentMethod" value="COD" checked onclick="toggleQR(false)">
-                    <span>Cash on Delivery (COD)</span>
+                    <input type="radio" name="paymentMethod" value="Online Transfer / QR" checked onclick="toggleQR(false)">
+                    <span>Online Transfer / QR Code</span>
                 </label>
                 <label class="payment-option">
-                    <input type="radio" name="paymentMethod" value="QR" onclick="toggleQR(true)">
-                    <span>QR Code Payment</span>
+                    <input type="radio" name="paymentMethod" value="Cash upon delivery/pickup" onclick="toggleQR(false)">
+                    <span>Cash Upon Delivery / Pickup</span>
                 </label>
             </div>
 
@@ -229,7 +327,7 @@
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=ENTPROJECT_PAYMENT" alt="Payment QR Code">
             </div>
 
-            <div class="total">Total Amount: RM <span id="paymentTotal">0.00</span></div>
+            <div class="total">Total Amount: RM <span id="paymentTotal">0.50</span></div>
 
             <div class="btn-group">
                 <button type="button" class="btn-action btn-secondary" onclick="goToStep(1)">Back</button>
@@ -251,6 +349,18 @@
 </div>
 
 <script>
+    // Simulasi Loading Screen Shopee Style (Hilang lepas 1.8 saat)
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const loader = document.getElementById('loadingScreen');
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+            }, 500);
+        }, 1800);
+    });
+
     let currentTheme = 'light';
 
     function toggleTheme() {
@@ -268,8 +378,14 @@
     function calculateTotal() {
         const cakeQty = parseInt(document.getElementById('cakeQty').value) || 0;
         const cookieQty = parseInt(document.getElementById('cookieQty').value) || 0;
-        const total = (cakeQty * 3.50) + (cookieQty * 2.00);
+        
+        // Semak caj penghantaran (COD = RM0.50, Pickup = RM0.00)
+        const fulfillment = document.querySelector('input[name="fulfillment"]:checked').value;
+        const shippingFee = (fulfillment === 'COD') ? 0.50 : 0.00;
+
+        const total = (cakeQty * 3.50) + (cookieQty * 4.00) + shippingFee;
         const formattedTotal = total.toFixed(2);
+        
         document.getElementById('totalPrice').innerText = formattedTotal;
         document.getElementById('paymentTotal').innerText = formattedTotal;
     }
@@ -311,6 +427,7 @@
         e.preventDefault();
 
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+        const fulfillment = document.querySelector('input[name="fulfillment"]:checked').value;
 
         const data = {
             name: document.getElementById('name').value,
@@ -319,7 +436,7 @@
             cakeQty: document.getElementById('cakeQty').value,
             cookieQty: document.getElementById('cookieQty').value,
             totalPrice: document.getElementById('totalPrice').innerText,
-            paymentMethod: paymentMethod
+            paymentMethod: `${paymentMethod} (${fulfillment})`
         };
 
         try {
@@ -342,7 +459,6 @@
     function resetForm() {
         document.getElementById('orderForm').reset();
         calculateTotal();
-        toggleQR(false);
         goToStep(1);
     }
 </script>
