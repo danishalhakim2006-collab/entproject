@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENTPROJECT - Customer Order Form</title>
+    <title>ENTPROJECT - Velvet Delishé</title>
     <style>
         :root {
             --bg-color: #f8fafc;
@@ -36,14 +36,14 @@
             transition: all 0.3s ease;
         }
 
-        /* Loading Screen (Shopee Style) */
+        /* LOADING SCREEN (Shopee Style) */
         #loadingScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: var(--bg-color);
+            background-color: #fff8f0;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -53,12 +53,12 @@
         }
 
         .loading-logo {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
             border-radius: 50%;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             animation: pulse 1.5s infinite;
         }
 
@@ -70,8 +70,8 @@
 
         .loading-text {
             font-size: 16px;
-            font-weight: 600;
-            color: var(--subtext);
+            font-weight: 700;
+            color: #8b5cf6;
             letter-spacing: 1px;
         }
 
@@ -83,7 +83,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             position: relative;
-            display: none; /* Disembunyikan semasa loading */
+            display: none; /* Hidden during loading */
         }
 
         .header {
@@ -138,10 +138,10 @@
         }
 
         .product-img {
-            width: 80px;
-            height: 80px;
+            width: 75px;
+            height: 75px;
             object-fit: cover;
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
         }
 
@@ -244,10 +244,10 @@
 </head>
 <body>
 
-<!-- LOADING SCREEN -->
+<!-- LOADING SCREEN WITH YOUR LOGO -->
 <div id="loadingScreen">
-    <img src="https://ibb.co/21B16MwF" alt="Velvet Delishé Logo" class="loading-logo">
-    <div class="loading-text">Loading Velvet Delishé...</div>
+    <img src="https://i.ibb.co/L9HvhZk/velvet-delishe.jpg" alt="Velvet Delishé Logo" class="loading-logo">
+    <div class="loading-text">Velvet Delishé</div>
 </div>
 
 <div class="container" id="mainContainer">
@@ -268,7 +268,7 @@
             <label>Delivery Address:</label>
             <textarea id="address" rows="3" required placeholder="Enter your complete address"></textarea>
 
-            <!-- Delivery / Fulfillment Option -->
+            <!-- Fulfillment Option -->
             <label>Fulfillment Method:</label>
             <div class="delivery-options">
                 <label class="delivery-option">
@@ -283,7 +283,7 @@
 
             <!-- Product 1: Choc Moist Cake -->
             <div class="product-card">
-                <img src="https://via.placeholder.com/150?text=Choc+Cake" alt="Choc Moist Cake" class="product-img">
+                <img src="https://i.ibb.co/L9HvhZk/velvet-delishe.jpg" alt="Choc Moist Cake" class="product-img">
                 <div class="product-info">
                     <label>Choc Moist Cake (1 pc @ RM 3.50)</label>
                     <input type="number" id="cakeQty" min="0" value="0" step="1" oninput="calculateTotal()">
@@ -292,7 +292,7 @@
 
             <!-- Product 2: Hokkaido Cupcake -->
             <div class="product-card">
-                <img src="https://via.placeholder.com/150?text=Hokkaido" alt="Hokkaido Cupcake" class="product-img">
+                <img src="https://i.ibb.co/L9HvhZk/velvet-delishe.jpg" alt="Hokkaido Cupcake" class="product-img">
                 <div class="product-info">
                     <label>Hokkaido Cupcake (1 set - 2 pcs @ RM 4.00)</label>
                     <input type="number" id="cookieQty" min="0" value="0" step="1" oninput="calculateTotal()">
@@ -312,7 +312,7 @@
             
             <div class="payment-options">
                 <label class="payment-option">
-                    <input type="radio" name="paymentMethod" value="Online Transfer / QR" checked onclick="toggleQR(false)">
+                    <input type="radio" name="paymentMethod" value="Online Transfer / QR" checked onclick="toggleQR(true)">
                     <span>Online Transfer / QR Code</span>
                 </label>
                 <label class="payment-option">
@@ -321,7 +321,7 @@
                 </label>
             </div>
 
-            <div class="qr-box" id="qrContainer">
+            <div class="qr-box" id="qrContainer" style="display: block;">
                 <p style="font-size: 13px; color: var(--subtext);">Scan the QR code below to pay:</p>
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=ENTPROJECT_PAYMENT" alt="Payment QR Code">
             </div>
@@ -338,7 +338,7 @@
         <div class="step" id="step3">
             <div class="success-box">
                 <h3>Order Successful!</h3>
-                <p style="color: var(--subtext);">Thank you for ordering our products.</p>
+                <p style="color: var(--subtext);">Thank you for ordering from Velvet Delishé.</p>
                 <div class="btn-group" style="margin-top: 30px;">
                     <button type="button" class="btn-action" onclick="resetForm()">Place New Order</button>
                 </div>
@@ -348,7 +348,7 @@
 </div>
 
 <script>
-    // Simulasi Loading Screen Shopee Style (Hilang lepas 1.8 saat)
+    // Loading Screen (Auto hide after 1.8 seconds)
     window.addEventListener('load', () => {
         setTimeout(() => {
             const loader = document.getElementById('loadingScreen');
@@ -378,7 +378,6 @@
         const cakeQty = parseInt(document.getElementById('cakeQty').value) || 0;
         const cookieQty = parseInt(document.getElementById('cookieQty').value) || 0;
         
-        // Semak caj penghantaran (COD = RM0.50, Pickup = RM0.00)
         const fulfillment = document.querySelector('input[name="fulfillment"]:checked').value;
         const shippingFee = (fulfillment === 'COD') ? 0.50 : 0.00;
 
