@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Velvet Delishé - Official Store</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="#ee4d2d">
     <style>
         :root {
             --primary: #ee4d2d; /* Shopee Orange Header */
@@ -22,6 +22,45 @@
             background-color: var(--bg);
             color: var(--text);
             padding-bottom: 80px;
+        }
+
+        /* SHOPEE STYLE LOADING SCREEN */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff8f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-logo {
+            width: 130px;
+            height: 130px;
+            object-fit: contain;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(0.95); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ee4d2d;
+            letter-spacing: 1px;
         }
 
         /* Shopee Header */
@@ -74,6 +113,11 @@
             padding: 2px 6px;
         }
 
+        /* Main Container (Sembunyi semasa loading) */
+        #mainContainer {
+            display: none;
+        }
+
         /* Product Grid (Shopee Style) */
         .grid-container {
             display: grid;
@@ -121,13 +165,6 @@
             margin-bottom: 8px;
         }
 
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 5px;
-        }
-
         .price {
             color: var(--primary);
             font-size: 15px;
@@ -164,8 +201,10 @@
         .cart-modal {
             position: fixed;
             bottom: 0;
-            left: 0;
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
+            max-width: 600px;
             background: white;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
             border-radius: 16px 16px 0 0;
@@ -173,9 +212,6 @@
             box-sizing: border-box;
             display: none;
             z-index: 200;
-            max-width: 600px;
-            left: 50%;
-            transform: translateX(-50%);
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -251,51 +287,61 @@
             max-width: 160px;
             border-radius: 8px;
             margin: 10px 0;
+            border: 1px solid var(--border);
         }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <div class="brand-name">
-        <img src="logo.png" alt="Logo">
-        <span>Velvet Delishé</span>
-    </div>
-    <button class="cart-icon-btn" onclick="openCart()">
-        🛒 <span class="cart-badge" id="cartCount">0</span>
-    </button>
+<!-- LOADING SCREEN -->
+<div id="loadingScreen">
+    <img src="VD logo.png.jpeg" alt="Velvet Delishé Logo" class="loading-logo">
+    <div class="loading-text">Velvet Delishé Store...</div>
 </div>
 
-<!-- Products Grid -->
-<div class="grid-container">
-    
-    <!-- Product 1: Choc Moist Cake -->
-    <div class="product-card">
-        <img src="logo.png" alt="Choc Moist Cake">
-        <div class="product-details">
-            <div class="product-title">Choc Moist Cake</div>
-            <span class="stock-tag" id="stockChoc">Stock: Loading...</span>
-            <div class="price">RM 3.50 <span style="font-size: 11px; color: var(--subtext);">/pc</span></div>
-            <button class="btn-add" id="btnAddChoc" onclick="addToCart('chocMoist', 'Choc Moist Cake', 3.50)">+ Add to Cart</button>
+<!-- MAIN STORE CONTENT -->
+<div id="mainContainer">
+    <div class="top-bar">
+        <div class="brand-name">
+            <img src="logo.png" alt="Logo">
+            <span>Velvet Delishé</span>
         </div>
+        <button class="cart-icon-btn" onclick="openCart()">
+            🛒 <span class="cart-badge" id="cartCount">0</span>
+        </button>
     </div>
 
-    <!-- Product 2: Hokkaido Cupcake -->
-    <div class="product-card">
-        <img src="logo.png" alt="Hokkaido Cupcake">
-        <div class="product-details">
-            <div class="product-title">Hokkaido Cupcake</div>
-            <span class="stock-tag" id="stockHokkaido">Stock: Loading...</span>
-            
-            <select class="select-option" id="hokkaidoVariant">
-                <option value="combo" data-price="4.00">Combo (2pcs) - RM 4.00</option>
-                <option value="triple" data-price="6.00">Triple (3pcs) - RM 6.00</option>
-            </select>
-
-            <button class="btn-add" id="btnAddHokkaido" onclick="addHokkaidoToCart()">+ Add to Cart</button>
+    <!-- Products Grid -->
+    <div class="grid-container">
+        
+        <!-- Product 1: Choc Moist Cake -->
+        <div class="product-card">
+            <img src="choc.jpg" alt="Choc Moist Cake" onerror="this.src='CM logo.png.jpeg'">
+            <div class="product-details">
+                <div class="product-title">Choc Moist Cake</div>
+                <span class="stock-tag" id="stockChoc">Stock: Loading...</span>
+                <div class="price">RM 3.50 <span style="font-size: 11px; color: var(--subtext);">/pc</span></div>
+                <button class="btn-add" id="btnAddChoc" onclick="addToCart('chocMoist', 'Choc Moist Cake', 3.50)">+ Add to Cart</button>
+            </div>
         </div>
-    </div>
 
+        <!-- Product 2: Hokkaido Cupcake -->
+        <div class="product-card">
+            <img src="hokkaido.jpg" alt="Hokkaido Cupcake" onerror="this.src='HC logo.png.jpeg'">
+            <div class="product-details">
+                <div class="product-title">Hokkaido Cupcake</div>
+                <span class="stock-tag" id="stockHokkaido">Stock: Loading...</span>
+                
+                <select class="select-option" id="hokkaidoVariant">
+                    <option value="combo" data-price="4.00">Combo (2pcs) - RM 4.00</option>
+                    <option value="triple" data-price="6.00">Triple (3pcs) - RM 6.00</option>
+                </select>
+
+                <button class="btn-add" id="btnAddHokkaido" onclick="addHokkaidoToCart()">+ Add to Cart</button>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <!-- Overlay & Cart Drawer -->
@@ -336,7 +382,7 @@
 
         <div class="form-group">
             <label>Delivery Address / Pickup Location Details:</label>
-            <textarea id="custAddress" rows="2" required placeholder="e.g. Blok A-3-04 / Kolej 3"></textarea>
+            <textarea id="custAddress" rows="2" required placeholder="e.g. Kolej 3 / Blok A-3-04"></textarea>
         </div>
 
         <div class="form-group">
@@ -349,9 +395,8 @@
 
         <!-- Payment Details Box -->
         <div class="payment-info-box" id="paymentDetailsBox">
-            <b>Maybank Account:</b> 1234 5678 9012 (Velvet Delishe)<br>
-            <p style="margin: 5px 0;">Or scan DuitNow QR below:</p>
-            <img src="qr.png" alt="DuitNow QR">
+            <p style="margin: 5px 0;">Scan DuitNow QR below to pay:</p>
+            <img src="qr.png" alt="DuitNow QR" onerror="this.src='logo.png'">
             
             <div class="form-group" style="text-align: left;">
                 <label>Upload Payment Receipt (Required):</label>
@@ -368,10 +413,21 @@
 </div>
 
 <script>
+    // AUTO HIDE LOADING SCREEN AFTER 1.8 SECONDS
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const loader = document.getElementById('loadingScreen');
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+            }, 500);
+        }, 1800);
+    });
+
     let cart = [];
     let liveStock = { chocMoist: 0, hokkaidoCombo: 0, hokkaidoTriple: 0 };
 
-    // Fetch Live Stock
     async function loadStock() {
         try {
             const res = await fetch('/api/stock');
@@ -450,7 +506,6 @@
             `;
         });
 
-        // Delivery Fee calculation
         const deliverySelect = document.getElementById('deliveryMethod');
         const deliveryFee = parseFloat(deliverySelect.options[deliverySelect.selectedIndex].dataset.fee) || 0;
 
@@ -480,7 +535,6 @@
         });
     }
 
-    // Submit Order
     document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -528,12 +582,19 @@
                 cart = [];
                 updateCartCount();
                 closeCart();
-                loadStock(); // Refresh stock
+                loadStock();
             } else {
                 alert('Failed to place order.');
             }
         } catch (err) { alert('Server error.'); }
     });
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+        });
+    }
 
     loadStock();
 </script>
