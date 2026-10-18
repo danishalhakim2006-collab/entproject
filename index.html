@@ -3,438 +3,517 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENTPROJECT - Velvet Delishé</title>
+    <title>Velvet Delishé - Official Store</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#16a34a">
     <style>
         :root {
-            --bg-color: #f8fafc;
+            --primary: #ee4d2d; /* Shopee Orange Header */
+            --bg: #f5f5f5;
             --card-bg: #ffffff;
-            --text-color: #1e293b;
-            --border-color: #cbd5e1;
-            --input-bg: #ffffff;
-            --primary-btn: #16a34a;
-            --primary-btn-hover: #15803d;
-            --subtext: #64748b;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --border-color: #334155;
-            --input-bg: #0f172a;
-            --primary-btn: #22c55e;
-            --primary-btn-hover: #16a34a;
-            --subtext: #94a3b8;
+            --text: #222222;
+            --subtext: #757575;
+            --border: #e8e8e8;
         }
 
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: all 0.3s ease;
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 80px;
         }
 
-        /* LOADING SCREEN (Shopee Style) */
-        #loadingScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #fff8f0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-
-        .loading-logo {
-            width: 140px;
-            height: 140px;
-            object-fit: contain;
-            border-radius: 50%;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(0.95); }
-        }
-
-        .loading-text {
-            font-size: 16px;
-            font-weight: 700;
-            color: #8b5cf6;
-            letter-spacing: 1px;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 20px auto;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            position: relative;
-            display: none; /* Hidden during loading */
-        }
-
-        .header {
+        /* Shopee Header */
+        .top-bar {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        h2 {
-            margin: 0;
-            color: var(--text-color);
+        .brand-name {
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .theme-toggle {
+        .brand-name img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .cart-icon-btn {
             background: none;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 6px 12px;
-            border-radius: 20px;
+            border: none;
+            color: white;
+            font-size: 22px;
             cursor: pointer;
-            font-size: 13px;
+            position: relative;
         }
 
-        label {
-            font-weight: 600;
-            display: block;
-            margin-top: 14px;
-            font-size: 14px;
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background: #fff;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 2px 6px;
         }
 
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            margin-top: 6px;
-            box-sizing: border-box;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
-            background-color: var(--input-bg);
-            color: var(--text-color);
+        /* Product Grid (Shopee Style) */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            padding: 15px;
+            max-width: 600px;
+            margin: auto;
         }
 
         .product-card {
-            border: 1px solid var(--border-color);
+            background: var(--card-bg);
             border-radius: 8px;
-            padding: 12px;
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .product-img {
-            width: 75px;
-            height: 75px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        .product-info {
-            flex: 1;
-        }
-
-        .product-info label {
-            margin-top: 0;
-        }
-
-        .total {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 20px;
-            color: #dc2626;
-            text-align: right;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-        }
-
-        button.btn-action {
-            flex: 1;
-            padding: 12px;
-            background-color: var(--primary-btn);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        button.btn-action:hover {
-            background-color: var(--primary-btn-hover);
-        }
-
-        button.btn-secondary {
-            background-color: #64748b;
-        }
-
-        button.btn-secondary:hover {
-            background-color: #475569;
-        }
-
-        .step { display: none; }
-        .step.active { display: block; }
-
-        .payment-options, .delivery-options {
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
+            justify-content: space-between;
         }
 
-        .payment-option, .delivery-option {
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            border-radius: 8px;
+        .product-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+
+        .product-details {
+            padding: 10px;
+        }
+
+        .product-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            line-height: 1.3;
+        }
+
+        .stock-tag {
+            font-size: 11px;
+            color: #2563eb;
+            background: #eff6ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .price-row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .price {
+            color: var(--primary);
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .select-option {
+            width: 100%;
+            padding: 6px;
+            margin-top: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .btn-add {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 10px;
             cursor: pointer;
         }
 
-        .payment-option input, .delivery-option input {
-            width: auto;
-            margin: 0;
+        .btn-add:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
 
-        .qr-box {
+        /* Cart Floating Modal / Checkout Drawer */
+        .cart-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
+            border-radius: 16px 16px 0 0;
+            padding: 20px;
+            box-sizing: border-box;
             display: none;
-            text-align: center;
-            margin-top: 15px;
-            padding: 15px;
-            border: 1px dashed var(--border-color);
-            border-radius: 8px;
+            z-index: 200;
+            max-width: 600px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        .qr-box img {
-            max-width: 180px;
-            border-radius: 8px;
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .success-box {
-            text-align: center;
-            padding: 20px 0;
-        }
-
-        .success-box h3 {
-            color: #16a34a;
-            font-size: 22px;
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-top: 12px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .btn-checkout {
+            width: 100%;
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 150;
+        }
+
+        .payment-info-box {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .payment-info-box img {
+            max-width: 160px;
+            border-radius: 8px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
 
-<!-- LOADING SCREEN WITH YOUR LOGO -->
-<div id="loadingScreen">
-    <img src="VD logo.png.jpeg" alt="Velvet Delishé Logo" class="loading-logo">
-    <div class="loading-text">Velvet Delishé</div>
+<div class="top-bar">
+    <div class="brand-name">
+        <img src="logo.png" alt="Logo">
+        <span>Velvet Delishé</span>
+    </div>
+    <button class="cart-icon-btn" onclick="openCart()">
+        🛒 <span class="cart-badge" id="cartCount">0</span>
+    </button>
 </div>
 
-<div class="container" id="mainContainer">
-    <div class="header">
-        <h2 id="pageTitle">Customer Order Form</h2>
-        <button type="button" class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+<!-- Products Grid -->
+<div class="grid-container">
+    
+    <!-- Product 1: Choc Moist Cake -->
+    <div class="product-card">
+        <img src="logo.png" alt="Choc Moist Cake">
+        <div class="product-details">
+            <div class="product-title">Choc Moist Cake</div>
+            <span class="stock-tag" id="stockChoc">Stock: Loading...</span>
+            <div class="price">RM 3.50 <span style="font-size: 11px; color: var(--subtext);">/pc</span></div>
+            <button class="btn-add" id="btnAddChoc" onclick="addToCart('chocMoist', 'Choc Moist Cake', 3.50)">+ Add to Cart</button>
+        </div>
     </div>
 
-    <form id="orderForm">
-        <!-- STEP 1: Details & Selection -->
-        <div class="step active" id="step1">
-            <label>Customer Name:</label>
-            <input type="text" id="name" required placeholder="Enter your full name">
-
-            <label>Phone Number:</label>
-            <input type="tel" id="phone" required placeholder="e.g. 0123456789">
-
-            <label>Delivery Address:</label>
-            <textarea id="address" rows="3" required placeholder="Enter your complete address"></textarea>
-
-            <!-- Fulfillment Option -->
-            <label>Fulfillment Method:</label>
-            <div class="delivery-options">
-                <label class="delivery-option">
-                    <input type="radio" name="fulfillment" value="COD" checked onclick="calculateTotal()">
-                    <span>Cash on Delivery (COD) - <b>RM 0.50</b></span>
-                </label>
-                <label class="delivery-option">
-                    <input type="radio" name="fulfillment" value="Pickup" onclick="calculateTotal()">
-                    <span>Self Pickup - <b>RM 0.00</b></span>
-                </label>
-            </div>
-
-            <!-- Product 1: Choc Moist Cake -->
-            <div class="product-card">
-                <img src="https://i.ibb.co/L9HvhZk/velvet-delishe.jpg" alt="Choc Moist Cake" class="product-img">
-                <div class="product-info">
-                    <label>Choc Moist Cake (1 pc @ RM 3.50)</label>
-                    <input type="number" id="cakeQty" min="0" value="0" step="1" oninput="calculateTotal()">
-                </div>
-            </div>
-
-            <!-- Product 2: Hokkaido Cupcake -->
-            <div class="product-card">
-                <img src="https://i.ibb.co/L9HvhZk/velvet-delishe.jpg" alt="Hokkaido Cupcake" class="product-img">
-                <div class="product-info">
-                    <label>Hokkaido Cupcake (1 set - 2 pcs @ RM 4.00)</label>
-                    <input type="number" id="cookieQty" min="0" value="0" step="1" oninput="calculateTotal()">
-                </div>
-            </div>
-
-            <div class="total">Total Price: RM <span id="totalPrice">0.50</span></div>
-
-            <div class="btn-group">
-                <button type="button" class="btn-action" onclick="goToStep(2)">Next</button>
-            </div>
-        </div>
-
-        <!-- STEP 2: Payment Options -->
-        <div class="step" id="step2">
-            <p style="color: var(--subtext); font-size: 14px;">Select your preferred payment method:</p>
+    <!-- Product 2: Hokkaido Cupcake -->
+    <div class="product-card">
+        <img src="logo.png" alt="Hokkaido Cupcake">
+        <div class="product-details">
+            <div class="product-title">Hokkaido Cupcake</div>
+            <span class="stock-tag" id="stockHokkaido">Stock: Loading...</span>
             
-            <div class="payment-options">
-                <label class="payment-option">
-                    <input type="radio" name="paymentMethod" value="Online Transfer / QR" checked onclick="toggleQR(true)">
-                    <span>Online Transfer / QR Code</span>
-                </label>
-                <label class="payment-option">
-                    <input type="radio" name="paymentMethod" value="Cash upon delivery/pickup" onclick="toggleQR(false)">
-                    <span>Cash Upon Delivery / Pickup</span>
-                </label>
-            </div>
+            <select class="select-option" id="hokkaidoVariant">
+                <option value="combo" data-price="4.00">Combo (2pcs) - RM 4.00</option>
+                <option value="triple" data-price="6.00">Triple (3pcs) - RM 6.00</option>
+            </select>
 
-            <div class="qr-box" id="qrContainer" style="display: block;">
-                <p style="font-size: 13px; color: var(--subtext);">Scan the QR code below to pay:</p>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=ENTPROJECT_PAYMENT" alt="Payment QR Code">
-            </div>
+            <button class="btn-add" id="btnAddHokkaido" onclick="addHokkaidoToCart()">+ Add to Cart</button>
+        </div>
+    </div>
 
-            <div class="total">Total Amount: RM <span id="paymentTotal">0.50</span></div>
+</div>
 
-            <div class="btn-group">
-                <button type="button" class="btn-action btn-secondary" onclick="goToStep(1)">Back</button>
-                <button type="submit" class="btn-action">Confirm & Order</button>
+<!-- Overlay & Cart Drawer -->
+<div class="overlay" id="overlay" onclick="closeCart()"></div>
+
+<div class="cart-modal" id="cartModal">
+    <div class="cart-header">
+        <h3 style="margin: 0;">Shopping Cart 🛒</h3>
+        <button style="background:none; border:none; font-size:18px; cursor:pointer;" onclick="closeCart()">✕</button>
+    </div>
+
+    <div id="cartItemsList">
+        <p style="text-align: center; color: var(--subtext);">Your cart is empty.</p>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">
+
+    <!-- Checkout Form -->
+    <form id="checkoutForm">
+        <div class="form-group">
+            <label>Full Name:</label>
+            <input type="text" id="custName" required placeholder="e.g. Ahmad Danish">
+        </div>
+
+        <div class="form-group">
+            <label>Phone Number:</label>
+            <input type="tel" id="custPhone" required placeholder="e.g. 0123456789">
+        </div>
+
+        <div class="form-group">
+            <label>Fulfillment Method:</label>
+            <select id="deliveryMethod" onchange="renderCart()">
+                <option value="COD_KOLEJ" data-fee="0.50">COD Kolej (RM 0.50)</option>
+                <option value="COD_NR" data-fee="1.00">COD Non-Resident / NR (RM 1.00)</option>
+                <option value="PICKUP" data-fee="0.00">Self Pickup (RM 0.00)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Delivery Address / Pickup Location Details:</label>
+            <textarea id="custAddress" rows="2" required placeholder="e.g. Blok A-3-04 / Kolej 3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Payment Method:</label>
+            <select id="paymentMethod" onchange="togglePaymentDetails()">
+                <option value="QR_BANK">QR Code / Bank Transfer</option>
+                <option value="COD_CASH">Cash on Delivery / Pickup</option>
+            </select>
+        </div>
+
+        <!-- Payment Details Box -->
+        <div class="payment-info-box" id="paymentDetailsBox">
+            <b>Maybank Account:</b> 1234 5678 9012 (Velvet Delishe)<br>
+            <p style="margin: 5px 0;">Or scan DuitNow QR below:</p>
+            <img src="qr.png" alt="DuitNow QR">
+            
+            <div class="form-group" style="text-align: left;">
+                <label>Upload Payment Receipt (Required):</label>
+                <input type="file" id="receiptFile" accept="image/*">
             </div>
         </div>
 
-        <!-- STEP 3: Order Successful -->
-        <div class="step" id="step3">
-            <div class="success-box">
-                <h3>Order Successful!</h3>
-                <p style="color: var(--subtext);">Thank you for ordering from Velvet Delishé.</p>
-                <div class="btn-group" style="margin-top: 30px;">
-                    <button type="button" class="btn-action" onclick="resetForm()">Place New Order</button>
-                </div>
-            </div>
+        <div style="font-size: 16px; font-weight: bold; text-align: right; margin-top: 15px; color: var(--primary);">
+            Total: RM <span id="cartGrandTotal">0.00</span>
         </div>
+
+        <button type="submit" class="btn-checkout">Confirm & Place Order</button>
     </form>
 </div>
 
 <script>
-    // Loading Screen (Auto hide after 1.8 seconds)
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            const loader = document.getElementById('loadingScreen');
-            loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.style.display = 'none';
-                document.getElementById('mainContainer').style.display = 'block';
-            }, 500);
-        }, 1800);
-    });
+    let cart = [];
+    let liveStock = { chocMoist: 0, hokkaidoCombo: 0, hokkaidoTriple: 0 };
 
-    let currentTheme = 'light';
+    // Fetch Live Stock
+    async function loadStock() {
+        try {
+            const res = await fetch('/api/stock');
+            liveStock = await res.json();
 
-    function toggleTheme() {
-        if (currentTheme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            document.getElementById('themeBtn').innerText = '☀️ Light Mode';
-            currentTheme = 'dark';
+            document.getElementById('stockChoc').innerText = `Stock: ${liveStock.chocMoist}`;
+            document.getElementById('stockHokkaido').innerText = `Combo: ${liveStock.hokkaidoCombo} | Triple: ${liveStock.hokkaidoTriple}`;
+
+            document.getElementById('btnAddChoc').disabled = liveStock.chocMoist <= 0;
+        } catch (e) { console.error("Error loading stock", e); }
+    }
+
+    function addToCart(id, name, price) {
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+            existing.qty += 1;
         } else {
-            document.documentElement.removeAttribute('data-theme');
-            document.getElementById('themeBtn').innerText = '🌙 Dark Mode';
-            currentTheme = 'light';
+            cart.push({ id, name, price, qty: 1 });
         }
+        updateCartCount();
     }
 
-    function calculateTotal() {
-        const cakeQty = parseInt(document.getElementById('cakeQty').value) || 0;
-        const cookieQty = parseInt(document.getElementById('cookieQty').value) || 0;
-        
-        const fulfillment = document.querySelector('input[name="fulfillment"]:checked').value;
-        const shippingFee = (fulfillment === 'COD') ? 0.50 : 0.00;
+    function addHokkaidoToCart() {
+        const select = document.getElementById('hokkaidoVariant');
+        const variant = select.value;
+        const price = parseFloat(select.options[select.selectedIndex].dataset.price);
 
-        const total = (cakeQty * 3.50) + (cookieQty * 4.00) + shippingFee;
-        const formattedTotal = total.toFixed(2);
-        
-        document.getElementById('totalPrice').innerText = formattedTotal;
-        document.getElementById('paymentTotal').innerText = formattedTotal;
-    }
-
-    function goToStep(stepNumber) {
-        if (stepNumber === 2) {
-            const name = document.getElementById('name').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const address = document.getElementById('address').value.trim();
-            const cakeQty = parseInt(document.getElementById('cakeQty').value) || 0;
-            const cookieQty = parseInt(document.getElementById('cookieQty').value) || 0;
-
-            if (!name || !phone || !address) {
-                alert('Please fill in all customer details before proceeding.');
-                return;
-            }
-
-            if (cakeQty === 0 && cookieQty === 0) {
-                alert('Please select at least one item to order.');
-                return;
-            }
-        }
-
-        document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
-        document.getElementById('step' + stepNumber).classList.add('active');
-
-        if (stepNumber === 3) {
-            document.getElementById('pageTitle').style.display = 'none';
+        if (variant === 'combo') {
+            addToCart('hokkaidoCombo', 'Hokkaido Cupcake (Combo 2pcs)', price);
         } else {
-            document.getElementById('pageTitle').style.display = 'block';
+            addToCart('hokkaidoTriple', 'Hokkaido Cupcake (Triple 3pcs)', price);
         }
     }
 
-    function toggleQR(show) {
-        document.getElementById('qrContainer').style.display = show ? 'block' : 'none';
+    function updateCartCount() {
+        const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+        document.getElementById('cartCount').innerText = totalQty;
     }
 
-    document.getElementById('orderForm').addEventListener('submit', async function(e) {
+    function openCart() {
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('cartModal').style.display = 'block';
+        renderCart();
+    }
+
+    function closeCart() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('cartModal').style.display = 'none';
+    }
+
+    function renderCart() {
+        const listContainer = document.getElementById('cartItemsList');
+        if (cart.length === 0) {
+            listContainer.innerHTML = '<p style="text-align: center; color: var(--subtext);">Your cart is empty.</p>';
+            document.getElementById('cartGrandTotal').innerText = '0.00';
+            return;
+        }
+
+        let itemsHTML = '';
+        let itemsTotal = 0;
+
+        cart.forEach((item, index) => {
+            const itemSum = item.price * item.qty;
+            itemsTotal += itemSum;
+            itemsHTML += `
+                <div class="cart-item">
+                    <div>
+                        <b>${item.name}</b><br>
+                        <small>RM ${item.price.toFixed(2)} x ${item.qty}</small>
+                    </div>
+                    <div>
+                        <b>RM ${itemSum.toFixed(2)}</b>
+                        <button style="color:red; background:none; border:none; cursor:pointer;" onclick="removeItem(${index})">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Delivery Fee calculation
+        const deliverySelect = document.getElementById('deliveryMethod');
+        const deliveryFee = parseFloat(deliverySelect.options[deliverySelect.selectedIndex].dataset.fee) || 0;
+
+        const grandTotal = itemsTotal + deliveryFee;
+
+        listContainer.innerHTML = itemsHTML;
+        document.getElementById('cartGrandTotal').innerText = grandTotal.toFixed(2);
+    }
+
+    function removeItem(index) {
+        cart.splice(index, 1);
+        updateCartCount();
+        renderCart();
+    }
+
+    function togglePaymentDetails() {
+        const method = document.getElementById('paymentMethod').value;
+        document.getElementById('paymentDetailsBox').style.display = (method === 'QR_BANK') ? 'block' : 'none';
+    }
+
+    function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Submit Order
+    document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-        const fulfillment = document.querySelector('input[name="fulfillment"]:checked').value;
+        if (cart.length === 0) {
+            alert('Your cart is empty!');
+            return;
+        }
+
+        const name = document.getElementById('custName').value;
+        const phone = document.getElementById('custPhone').value;
+        const address = document.getElementById('custAddress').value;
+        const deliveryText = document.getElementById('deliveryMethod').options[document.getElementById('deliveryMethod').selectedIndex].text;
+        const paymentMethodVal = document.getElementById('paymentMethod').value;
+        const receiptInput = document.getElementById('receiptFile');
+
+        let receiptData = null;
+
+        if (paymentMethodVal === 'QR_BANK') {
+            if (receiptInput.files.length === 0) {
+                alert('Please upload payment receipt before proceeding.');
+                return;
+            }
+            receiptData = await readFileAsBase64(receiptInput.files[0]);
+        }
 
         const data = {
-            name: document.getElementById('name').value,
-            phone: document.getElementById('phone').value,
-            address: document.getElementById('address').value,
-            cakeQty: document.getElementById('cakeQty').value,
-            cookieQty: document.getElementById('cookieQty').value,
-            totalPrice: document.getElementById('totalPrice').innerText,
-            paymentMethod: `${paymentMethod} (${fulfillment})`
+            name,
+            phone,
+            address: `${address} (${deliveryText})`,
+            items: cart,
+            totalPrice: document.getElementById('cartGrandTotal').innerText,
+            paymentMethod: paymentMethodVal === 'QR_BANK' ? 'Online Transfer / QR' : 'COD (Cash)',
+            receipt: receiptData
         };
 
         try {
@@ -445,21 +524,18 @@
             });
 
             if (res.ok) {
-                goToStep(3);
+                alert('Order placed successfully! Thank you.');
+                cart = [];
+                updateCartCount();
+                closeCart();
+                loadStock(); // Refresh stock
             } else {
-                alert('Failed to submit order. Please try again.');
+                alert('Failed to place order.');
             }
-        } catch (err) {
-            alert('Server connection error.');
-        }
+        } catch (err) { alert('Server error.'); }
     });
 
-    function resetForm() {
-        document.getElementById('orderForm').reset();
-        calculateTotal();
-        goToStep(1);
-    }
+    loadStock();
 </script>
-
 </body>
 </html>
