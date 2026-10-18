@@ -8,12 +8,23 @@
     <meta name="theme-color" content="#ee4d2d">
     <style>
         :root {
-            --primary: #ee4d2d; /* Shopee Orange Header */
+            --primary: #ee4d2d;
             --bg: #f5f5f5;
             --card-bg: #ffffff;
             --text: #222222;
             --subtext: #757575;
             --border: #e8e8e8;
+            --input-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --primary: #f97316;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+            --border: #334155;
+            --input-bg: #0f172a;
         }
 
         body {
@@ -22,6 +33,7 @@
             background-color: var(--bg);
             color: var(--text);
             padding-bottom: 80px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* SHOPEE STYLE LOADING SCREEN */
@@ -31,7 +43,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #fff8f0;
+            background-color: var(--bg);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -59,7 +71,7 @@
         .loading-text {
             font-size: 16px;
             font-weight: 700;
-            color: #ee4d2d;
+            color: var(--primary);
             letter-spacing: 1px;
         }
 
@@ -78,7 +90,7 @@
         }
 
         .brand-name {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -90,6 +102,23 @@
             height: 35px;
             border-radius: 50%;
             object-fit: cover;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .theme-toggle-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
         }
 
         .cart-icon-btn {
@@ -113,12 +142,12 @@
             padding: 2px 6px;
         }
 
-        /* Main Container (Sembunyi semasa loading) */
+        /* Main Container */
         #mainContainer {
             display: none;
         }
 
-        /* Product Grid (Shopee Style) */
+        /* Product Grid */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -136,6 +165,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            border: 1px solid var(--border);
         }
 
         .product-card img {
@@ -153,12 +183,13 @@
             font-weight: 600;
             margin-bottom: 5px;
             line-height: 1.3;
+            color: var(--text);
         }
 
         .stock-tag {
             font-size: 11px;
-            color: #2563eb;
-            background: #eff6ff;
+            color: #0284c7;
+            background: rgba(2, 132, 199, 0.1);
             padding: 2px 6px;
             border-radius: 4px;
             display: inline-block;
@@ -178,6 +209,8 @@
             border: 1px solid var(--border);
             border-radius: 4px;
             font-size: 12px;
+            background-color: var(--input-bg);
+            color: var(--text);
         }
 
         .btn-add {
@@ -193,7 +226,7 @@
         }
 
         .btn-add:disabled {
-            background: #ccc;
+            background: #94a3b8;
             cursor: not-allowed;
         }
 
@@ -205,7 +238,8 @@
             transform: translateX(-50%);
             width: 100%;
             max-width: 600px;
-            background: white;
+            background: var(--card-bg);
+            color: var(--text);
             box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
             border-radius: 16px 16px 0 0;
             padding: 20px;
@@ -214,6 +248,7 @@
             z-index: 200;
             max-height: 90vh;
             overflow-y: auto;
+            border-top: 1px solid var(--border);
         }
 
         .cart-header {
@@ -242,6 +277,7 @@
             font-weight: bold;
             display: block;
             margin-bottom: 4px;
+            color: var(--text);
         }
 
         .form-group input, .form-group textarea, .form-group select {
@@ -250,6 +286,8 @@
             box-sizing: border-box;
             border: 1px solid var(--border);
             border-radius: 6px;
+            background-color: var(--input-bg);
+            color: var(--text);
         }
 
         .btn-checkout {
@@ -274,8 +312,8 @@
         }
 
         .payment-info-box {
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
+            background: var(--bg);
+            border: 1px dashed var(--border);
             padding: 12px;
             border-radius: 8px;
             margin-top: 10px;
@@ -303,12 +341,15 @@
 <div id="mainContainer">
     <div class="top-bar">
         <div class="brand-name">
-            <img src="logo.png" alt="Logo">
+            <img src="VD logo.png.jpeg" alt="Logo">
             <span>Velvet Delishé</span>
         </div>
-        <button class="cart-icon-btn" onclick="openCart()">
-            🛒 <span class="cart-badge" id="cartCount">0</span>
-        </button>
+        <div class="header-actions">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+            <button class="cart-icon-btn" onclick="openCart()">
+                🛒 <span class="cart-badge" id="cartCount">0</span>
+            </button>
+        </div>
     </div>
 
     <!-- Products Grid -->
@@ -350,7 +391,7 @@
 <div class="cart-modal" id="cartModal">
     <div class="cart-header">
         <h3 style="margin: 0;">Shopping Cart 🛒</h3>
-        <button style="background:none; border:none; font-size:18px; cursor:pointer;" onclick="closeCart()">✕</button>
+        <button style="background:none; border:none; font-size:18px; cursor:pointer; color: var(--text);" onclick="closeCart()">✕</button>
     </div>
 
     <div id="cartItemsList">
@@ -413,7 +454,21 @@
 </div>
 
 <script>
-    // AUTO HIDE LOADING SCREEN AFTER 1.8 SECONDS
+    // Theme Toggle Logic
+    let currentTheme = 'light';
+    function toggleTheme() {
+        if (currentTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeBtn').innerText = '☀️ Light';
+            currentTheme = 'dark';
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            document.getElementById('themeBtn').innerText = '🌙 Dark';
+            currentTheme = 'light';
+        }
+    }
+
+    // AUTO HIDE LOADING SCREEN
     window.addEventListener('load', () => {
         setTimeout(() => {
             const loader = document.getElementById('loadingScreen');
@@ -496,11 +551,11 @@
                 <div class="cart-item">
                     <div>
                         <b>${item.name}</b><br>
-                        <small>RM ${item.price.toFixed(2)} x ${item.qty}</small>
+                        <small style="color: var(--subtext);">RM ${item.price.toFixed(2)} x ${item.qty}</small>
                     </div>
                     <div>
                         <b>RM ${itemSum.toFixed(2)}</b>
-                        <button style="color:red; background:none; border:none; cursor:pointer;" onclick="removeItem(${index})">✕</button>
+                        <button style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;" onclick="removeItem(${index})">✕</button>
                     </div>
                 </div>
             `;
