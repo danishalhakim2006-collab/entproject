@@ -333,7 +333,7 @@
 
 <!-- LOADING SCREEN -->
 <div id="loadingScreen">
-    <img src="VD logo.png.jpeg" alt="Velvet Delishé Logo" class="loading-logo">
+    <img src="VD logo.png.jpeg" alt="Velvet Delishé Logo" class="loading-logo" onerror="this.src='https://via.placeholder.com/130?text=Velvet+Delishe'">
     <div class="loading-text">Velvet Delishé Store...</div>
 </div>
 
@@ -341,7 +341,7 @@
 <div id="mainContainer">
     <div class="top-bar">
         <div class="brand-name">
-            <img src="VD logo.png.jpeg" alt="Logo">
+            <img src="VD logo.png.jpeg" alt="Logo" onerror="this.src='https://via.placeholder.com/35'">
             <span>Velvet Delishé</span>
         </div>
         <div class="header-actions">
@@ -468,17 +468,17 @@
         }
     }
 
-    // AUTO HIDE LOADING SCREEN
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            const loader = document.getElementById('loadingScreen');
+    // FIXED LOADING SCREEN TIMER (NO STUCK)
+    setTimeout(() => {
+        const loader = document.getElementById('loadingScreen');
+        if (loader) {
             loader.style.opacity = '0';
             setTimeout(() => {
                 loader.style.display = 'none';
                 document.getElementById('mainContainer').style.display = 'block';
             }, 500);
-        }, 1800);
-    });
+        }
+    }, 1500);
 
     let cart = [];
     let liveStock = { chocMoist: 0, hokkaidoCombo: 0, hokkaidoTriple: 0 };
