@@ -301,12 +301,6 @@
             border-radius: 8px;
             margin-top: 15px;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-checkout:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
         }
 
         .overlay {
@@ -455,7 +449,7 @@
             Total: RM <span id="cartGrandTotal">0.00</span>
         </div>
 
-        <button type="submit" class="btn-checkout" id="submitBtn">Confirm & Place Order</button>
+        <button type="submit" class="btn-checkout">Confirm & Place Order</button>
     </form>
 </div>
 
@@ -596,7 +590,6 @@
         });
     }
 
-    // SUBMIT ORDER WITH DOUBLE-CLICK / MULTI-SUBMIT PREVENTER
     document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -605,7 +598,6 @@
             return;
         }
 
-        const submitBtn = document.getElementById('submitBtn');
         const name = document.getElementById('custName').value;
         const phone = document.getElementById('custPhone').value;
         const address = document.getElementById('custAddress').value;
@@ -622,10 +614,6 @@
             }
             receiptData = await readFileAsBase64(receiptInput.files[0]);
         }
-
-        // LOCK BUTTON IMMEDIATELY (PREVENT DOUBLE SUBMIT)
-        submitBtn.disabled = true;
-        submitBtn.innerText = 'Processing Order...';
 
         const data = {
             name,
@@ -650,17 +638,10 @@
                 updateCartCount();
                 closeCart();
                 loadStock();
-                document.getElementById('checkoutForm').reset();
             } else {
-                alert('Failed to place order. Please try again.');
+                alert('Failed to place order.');
             }
-        } catch (err) { 
-            alert('Server error.'); 
-        } finally {
-            // UNLOCK BUTTON AFTER PROCESS COMPLETED
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'Confirm & Place Order';
-        }
+        } catch (err) { alert('Server error.'); }
     });
 
     // PWA Service Worker Registration
