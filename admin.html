@@ -372,51 +372,50 @@
     }
 
     // Fetch All Customer Orders
-    async function fetchOrders() {
-        try {
-            const res = await fetch('/api/orders');
-            const orders = await res.json();
+async function fetchOrders() {
+    try {
+        const res = await fetch('/api/orders');
+        const orders = await res.json();
+        
+        const tbody = document.getElementById('orderTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (!orders || orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--subtext);">No orders received yet.</td></tr>';
+            return;
+        }
 
-            const tbody = document.getElementById('orderTableBody');
-            tbody.innerHTML = '';
+        orders.forEach(o => {
+            const tr = document.createElement('tr');
+            const receiptBtn = o.receipt && o.receipt !== 'N/A' 
+                ? `<button class="btn-receipt" onclick="viewReceipt('${o.orderId || o.id}')">View Receipt</button>` 
+                : `<span style="color: var(--subtext); font-size: 11px;">N/A</span>`;
 
-            if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--subtext);">No orders received yet.</td></tr>';
-                return;
+            tr.innerHTML = `
+                <td>${o.orderId || o.id || 'N/A'}</td>
+                <td>${o.date || 'N/A'}</td>
+                <td><b>${o.customerName || o.name || 'N/A'}</b></td>
+                <td>${o.phone || 'N/A'}</td>
+                <td>${o.address || 'N/A'}</td>
+                <td>${o.itemsOrdered || o.orderDetails || 'N/A'}</td>
+                <td><b>RM ${parseFloat(o.total || 0).toFixed(2)}</b></td>
+                <td>${o.payment || 'N/A'}</td>
+                <td>${receiptBtn}</td>
+                <td><button class="btn-delete" onclick="deleteOrder('${o.orderId || o.id}')" style="background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Delete</button></td>
+            `;
+
+            if (o.receipt) {
+                tr.dataset.receipt = o.receipt;
+                tr.id = 'order-' + (o.orderId || o.id);
             }
 
-            orders.forEach(order => {
-                const tr = document.createElement('tr');
-                
-                const receiptButton = order.receipt 
-                    ? `<button class="btn-receipt" onclick="viewReceipt('${order.id}')">View Receipt</button>` 
-                    : `<span style="color: var(--subtext); font-size: 11px;">N/A</span>`;
-
-                tr.innerHTML = `
-                    <td>${order.id}</td>
-                    <td>${order.date}</td>
-                    <td><b>${order.name}</b></td>
-                    <td>${order.phone}</td>
-                    <td>${order.address}</td>
-                    <td>${order.orderDetails}</td>
-                    <td><b>RM ${parseFloat(order.totalPrice).toFixed(2)}</b></td>
-                    <td>${order.paymentMethod}</td>
-                    <td>${receiptButton}</td>
-                    <td><button class="btn-delete" onclick="deleteOrder(${order.id})">Delete</button></td>
-                `;
-                
-                // Store receipt in dataset
-                if (order.receipt) {
-                    tr.dataset.receipt = order.receipt;
-                    tr.id = 'order-' + order.id;
-                }
-
-                tbody.appendChild(tr);
-            });
-        } catch (err) {
-            console.error('Error fetching orders:', err);
-        }
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Error fetching orders:', err);
     }
+}
 
     // View Receipt Image Modal
     function viewReceipt(orderId) {
