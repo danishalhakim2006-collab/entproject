@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Data stok sementara
+// Data stok semasa
 let stockData = {
   cake: 38,
   combo: 15,
@@ -13,11 +13,13 @@ let stockData = {
 
 let orders = [];
 
-// --- FUNGSI FORMAT DATA PESANAN ---
+// --- FUNGSI FORMAT DATA & TOLAK STOK AUTOMATIK ---
 function formatOrder(data) {
   const now = new Date();
   const formattedDate = data.date || data.createdAt || data.dateTime || now.toLocaleString('en-GB', { timeZone: 'Asia/Kuala_Lumpur' });
-  const orderId = data.id || data.orderId || 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+  
+  // Ambil ID jika ada, atau generate baru
+  const orderId = String(data.id || data.orderId || 'ORD-' + Math.floor(1000 + Math.random() * 9000)).trim();
 
   let itemsFormatted = '';
   const rawItems = data.itemsOrdered || data.orderedItems || data.items || data.cart || data.products || data.orderItems || data.item || data.orderDetails;
@@ -37,11 +39,16 @@ function formatOrder(data) {
       .join(', ');
   }
 
+  // Auto tolak stok berdasarkan input
+  let cakeQty = parseInt(data.cake || data.cakeQty || data.chocCake || 0);
+  let comboQty = parseInt(data.combo || data.comboQty || 0);
+  let tripleQty = parseInt(data.triple || data.tripleQty || 0);
+
   if (!itemsFormatted || itemsFormatted === 'undefined' || itemsFormatted === 'N/A') {
     let details = [];
-    if (data.cake || data.cakeQty || data.chocCake) details.push(`Choc Moist Cake (x${data.cake || data.cakeQty || data.chocCake})`);
-    if (data.combo || data.comboQty) details.push(`Hokkaido Combo 2pcs (x${data.combo || data.comboQty})`);
-    if (data.triple || data.tripleQty) details.push(`Hokkaido Triple 3pcs (x${data.triple || data.tripleQty})`);
+    if (cakeQty > 0) details.push(`Choc Moist Cake (x${cakeQty})`);
+    if (comboQty > 0) details.push(`Hokkaido Combo 2pcs (x${comboQty})`);
+    if (tripleQty > 0) details.push(`Hokkaido Triple 3pcs (x${tripleQty})`);
     
     if (details.length > 0) {
       itemsFormatted = details.join(', ');
@@ -49,6 +56,11 @@ function formatOrder(data) {
       itemsFormatted = data.summary || data.note || data.description || 'Order Received';
     }
   }
+
+  // Tolak stok secara automatik di RAM
+  if (cakeQty > 0) stockData.cake = Math.max(0, stockData.cake - cakeQty);
+  if (comboQty > 0) stockData.combo = Math.max(0, stockData.combo - comboQty);
+  if (tripleQty > 0) stockData.triple = Math.max(0, stockData.triple - tripleQty);
 
   return {
     ...data,
@@ -96,7 +108,7 @@ app.put('/api/stock', (req, res) => {
   res.json({ success: true, message: 'Stock updated successfully!' });
 });
 
-// --- 2. ENDPOINT ORDERS (BACA & SIMPAN) ---
+// --- 2. ENDPOINT ORDERS ---
 app.get('/api/orders', (req, res) => {
   res.json(orders);
 });
@@ -107,44 +119,29 @@ app.post('/api/orders', (req, res) => {
   res.status(200).json({ success: true, message: 'Order berjaya disimpan!', order: newOrder });
 });
 
-// --- 3. ENDPOINT DELETE SUPER LENGKAP (TANGKAP SEMUA CARA FRONTEND DELETE) ---
-
-// Cara A: DELETE /api/orders/:id
+// --- 3. ENDPOINT DELETE YANG MENYOKONG SEMUA FORMAT ID FRONTEND ---
 app.delete('/api/orders/:id', (req, res) => {
-  const target = String(req.params.id).trim();
-  orders = orders.filter((o, idx) => {
-    return String(o.id) !== target && 
-           String(o.orderId) !== target && 
-           String(idx) !== target &&
-           String(o.customerName) !== target;
+  const targetId = String(req.params.id).trim();
+  
+  orders = orders.filter((o, index) => {
+    const oId = String(o.id || '').trim();
+    const oOrderId = String(o.orderId || '').trim();
+    const oIndex = String(index);
+    
+    // Padankan dengan ID, OrderID, atau index baris
+    return oId !== targetId && oOrderId !== targetId && oIndex !== targetId;
   });
+
   res.json({ success: true, message: 'Deleted successfully' });
 });
 
-// Cara B: DELETE /api/orders (guna query / body)
 app.delete('/api/orders', (req, res) => {
-  const target = String(req.query.id || req.body.id || req.body.orderId || req.body.index).trim();
-  if (target) {
-    orders = orders.filter((o, idx) => {
-      return String(o.id) !== target && 
-             String(o.orderId) !== target && 
-             String(idx) !== target;
-    });
+  const targetId = String(req.query.id || req.body.id || req.body.orderId || '').trim();
+  if (targetId) {
+    orders = orders.filter((o, idx) => String(o.id) !== targetId && String(o.orderId) !== targetId && String(idx) !== targetId);
   } else {
-    // Jika tiada param, padangkan semua order kosong / corrupted
-    orders = orders.filter(o => o.customerName && o.customerName !== 'N/A');
+    orders = []; // Kalau kosong, reset habis senarai order
   }
-  res.json({ success: true, message: 'Deleted successfully' });
-});
-
-// Cara C: POST /api/orders/delete (sesetengah frontend lama guna POST untuk delete)
-app.post('/api/orders/delete', (req, res) => {
-  const target = String(req.body.id || req.body.orderId || req.body.index).trim();
-  orders = orders.filter((o, idx) => {
-    return String(o.id) !== target && 
-           String(o.orderId) !== target && 
-           String(idx) !== target;
-  });
   res.json({ success: true, message: 'Deleted successfully' });
 });
 
