@@ -371,14 +371,16 @@
         }
     }
 
-    // Fetch All Customer Orders
+    // Fetch All Customer Orders (Versi Kebal & Auto-detect Table ID)
 async function fetchOrders() {
     try {
         const res = await fetch('/api/orders');
         const orders = await res.json();
         
-        const tbody = document.getElementById('orderTableBody');
+        // Cari ID table tak kisah lah orderTableBody atau ordersTableBody
+        const tbody = document.getElementById('orderTableBody') || document.getElementById('ordersTableBody');
         if (!tbody) return;
+        
         tbody.innerHTML = '';
         
         if (!orders || orders.length === 0) {
@@ -388,26 +390,37 @@ async function fetchOrders() {
 
         orders.forEach(o => {
             const tr = document.createElement('tr');
-            const receiptBtn = o.receipt && o.receipt !== 'N/A' 
-                ? `<button class="btn-receipt" onclick="viewReceipt('${o.orderId || o.id}')">View Receipt</button>` 
+            
+            // Ambil ID order (support pelbagai format)
+            const idDisplay = o.orderId || o.id || 'ORD-UNKNOWN';
+            const nameDisplay = o.customerName || o.name || o.customer_name || 'Pelanggan';
+            const phoneDisplay = o.phone || o.phoneNumber || '-';
+            const addressDisplay = o.address || '-';
+            const itemsDisplay = o.itemsOrdered || o.orderDetails || o.items || '-';
+            const totalDisplay = parseFloat(o.total || o.totalPrice || 0).toFixed(2);
+            const paymentDisplay = o.payment || o.paymentMethod || 'COD';
+            const dateDisplay = o.date || '-';
+
+            const receiptBtn = (o.receipt && o.receipt !== 'N/A') 
+                ? `<button class="btn-receipt" onclick="viewReceipt('${idDisplay}')">View Receipt</button>` 
                 : `<span style="color: var(--subtext); font-size: 11px;">N/A</span>`;
 
             tr.innerHTML = `
-                <td>${o.orderId || o.id || 'N/A'}</td>
-                <td>${o.date || 'N/A'}</td>
-                <td><b>${o.customerName || o.name || 'N/A'}</b></td>
-                <td>${o.phone || 'N/A'}</td>
-                <td>${o.address || 'N/A'}</td>
-                <td>${o.itemsOrdered || o.orderDetails || 'N/A'}</td>
-                <td><b>RM ${parseFloat(o.total || 0).toFixed(2)}</b></td>
-                <td>${o.payment || 'N/A'}</td>
+                <td>${idDisplay}</td>
+                <td>${dateDisplay}</td>
+                <td><b>${nameDisplay}</b></td>
+                <td>${phoneDisplay}</td>
+                <td>${addressDisplay}</td>
+                <td>${itemsDisplay}</td>
+                <td><b>RM ${totalDisplay}</b></td>
+                <td>${paymentDisplay}</td>
                 <td>${receiptBtn}</td>
-                <td><button class="btn-delete" onclick="deleteOrder('${o.orderId || o.id}')" style="background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Delete</button></td>
+                <td><button class="btn-delete" onclick="deleteOrder('${idDisplay}')" style="background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Delete</button></td>
             `;
 
             if (o.receipt) {
                 tr.dataset.receipt = o.receipt;
-                tr.id = 'order-' + (o.orderId || o.id);
+                tr.id = 'order-' + idDisplay;
             }
 
             tbody.appendChild(tr);
