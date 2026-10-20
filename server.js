@@ -13,13 +13,12 @@ let stockData = {
 
 let orders = [];
 
-// --- FUNGSI FORMAT DATA PESANAN (MENGATASI UNDEFINED PADA ITEMS ORDERED) ---
+// --- FUNGSI FORMAT DATA PESANAN ---
 function formatOrder(data) {
   const now = new Date();
   const formattedDate = data.date || data.createdAt || data.dateTime || now.toLocaleString('en-GB', { timeZone: 'Asia/Kuala_Lumpur' });
   const orderId = data.id || data.orderId || 'ORD-' + Math.floor(1000 + Math.random() * 9000);
 
-  // 1. Ambil data item dari berbagai kemungkinan key frontend
   let itemsFormatted = '';
   const rawItems = data.itemsOrdered || data.orderedItems || data.items || data.cart || data.products || data.orderItems || data.item || data.orderDetails;
 
@@ -38,7 +37,6 @@ function formatOrder(data) {
       .join(', ');
   }
 
-  // 2. Jika masih kosong/undefined, periksa input spesifik produk Velvet Delishé
   if (!itemsFormatted || itemsFormatted === 'undefined' || itemsFormatted === 'N/A') {
     let details = [];
     if (data.cake || data.cakeQty || data.chocCake) details.push(`Choc Moist Cake (x${data.cake || data.cakeQty || data.chocCake})`);
@@ -48,12 +46,10 @@ function formatOrder(data) {
     if (details.length > 0) {
       itemsFormatted = details.join(', ');
     } else {
-      // Fallback: Tampilkan ringkasan data request agar tidak muncul kata 'undefined'
       itemsFormatted = data.summary || data.note || data.description || 'Order Received';
     }
   }
 
-  // Set properti seragam untuk dibaca admin.html
   return {
     ...data,
     id: orderId,
@@ -65,7 +61,6 @@ function formatOrder(data) {
     phone: data.phone || data.phoneNumber || data.contact || 'N/A',
     address: data.address || data.location || 'N/A',
     
-    // Semua kunci alternatif untuk kolom Items Ordered
     itemsOrdered: itemsFormatted,
     orderedItems: itemsFormatted,
     items: itemsFormatted,
@@ -112,9 +107,20 @@ app.post('/api/orders', (req, res) => {
   res.status(200).json({ success: true, message: 'Order berjaya disimpan!', order: newOrder });
 });
 
+// DIPERBAIKI: Endpoint Delete pesanan (Menyokong ID teks, nombor, atau indeks baris)
 app.delete('/api/orders/:id', (req, res) => {
-  const { id } = req.params;
-  orders = orders.filter(o => o.id !== id && o.orderId !== id);
+  const targetId = String(req.params.id).trim();
+  
+  const initialLength = orders.length;
+  orders = orders.filter((o, index) => {
+    const oId = String(o.id || '').trim();
+    const oOrderId = String(o.orderId || '').trim();
+    const oIndex = String(index);
+    
+    // Padankan dengan ID, OrderID, atau kedudukan indeks baris
+    return oId !== targetId && oOrderId !== targetId && oIndex !== targetId;
+  });
+
   res.json({ success: true, message: 'Order deleted successfully' });
 });
 
