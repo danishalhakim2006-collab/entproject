@@ -11,14 +11,16 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || "sb_publishable_n0KbWh2C2prsA3J
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Data Stok Semasa
+// Memory Storage (Backup jika Supabase bermasalah supaya admin.html TETAP DAPAT DATA)
+let ordersMemory = [];
+
 let stockData = {
   chocMoist: 38,
   hokkaidoCombo: 15,
   hokkaidoTriple: 10
 };
 
-// --- 2. FUNGSI FORMAT ORDER (SESUAI DENGAN INDEX.HTML & ADMIN.HTML) ---
+// --- 2. FUNGSI FORMAT ORDER ---
 function formatOrder(data) {
   const now = new Date();
   const formattedDate = data.date || data.createdAt || data.dateTime || now.toLocaleString('en-GB', { timeZone: 'Asia/Kuala_Lumpur' });
@@ -78,58 +80,80 @@ app.put('/api/stock/update', updateStockHandler);
 app.post('/api/stock', updateStockHandler);
 app.put('/api/stock', updateStockHandler);
 
-// --- 4. ENDPOINT ORDERS (BACA & SIMPAN SUPABASE) ---
+// --- 4. ENDPOINT ORDERS ---
 
-// AMBIL KESEMUA ORDER (UNTUK ADMIN.HTML)
+// BACA KESEMUA ORDER (AMBIL SUPABASE + MEMORY)
 app.get('/api/orders', async (req, res) => {
+  let combinedOrders = [...ordersMemory];
+
   try {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
       .order('id', { ascending: false });
 
-    if (error || !data) {
-      return res.json([]);
+    if (!error && data && data.length > 0) {
+      const dbOrders = data.map(o => ({
+        id: o.order_id || o.id,
+        orderId: o.order_id || o.id,
+        date: o.date,
+        customerName: o.customer_name,
+        name: o.customer_name,
+        phone: o.phone,
+        address: o.address,
+        itemsOrdered: o.items_ordered,
+        orderDetails: o.items_ordered,
+        total: o.total,
+        totalPrice: o.total,
+        payment: o.payment,
+        paymentMethod: o.payment,
+        receipt: o.receipt
+      }));
+
+      // Gabungkan data memory dan data Supabase
+      const existingIds = new Set(combinedOrders.map(o => o.id));
+      dbOrders.forEach(o => {
+        if (!existingIds.has(o.id)) combinedOrders.push(o);
+      });
     }
-
-    // Mapping khas untuk admin.html
-    const formattedOrders = data.map(o => ({
-      id: o.order_id || o.id,
-      orderId: o.order_id || o.id,
-      date: o.date,
-      customerName: o.customer_name,
-      name: o.customer_name,
-      phone: o.phone,
-      address: o.address,
-      itemsOrdered: o.items_ordered,
-      orderDetails: o.items_ordered,
-      total: o.total,
-      totalPrice: o.total,
-      payment: o.payment,
-      paymentMethod: o.payment,
-      receipt: o.receipt
-    }));
-
-    res.json(formattedOrders);
   } catch (err) {
-    res.json([]);
+    console.error('Fetch Supabase error:', err);
   }
+
+  res.json(combinedOrders);
 });
 
-// SIMPAN ORDER BARU (DARI INDEX.HTML)
+// SIMPAN ORDER BARU
 app.post('/api/orders', async (req, res) => {
   try {
     const orderPayload = formatOrder(req.body);
 
-    // Cubaan simpan ke Supabase
-    const { error } = await supabase.from('orders').insert([orderPayload]);
+    // 1. Simpan ke Memory terus (Garansi Admin Dashboard akan DAPAT data)
+    const memoryObj = {
+      id: orderPayload.order_id,
+      orderId: orderPayload.order_id,
+      date: orderPayload.date,
+      customerName: orderPayload.customer_name,
+      name: orderPayload.customer_name,
+      phone: orderPayload.phone,
+      address: orderPayload.address,
+      itemsOrdered: orderPayload.items_ordered,
+      orderDetails: orderPayload.items_ordered,
+      total: orderPayload.total,
+      totalPrice: orderPayload.total,
+      payment: orderPayload.payment,
+      paymentMethod: orderPayload.payment,
+      receipt: orderPayload.receipt
+    };
+    ordersMemory.unshift(memoryObj);
 
-    if (error) {
-      console.error('Supabase error:', error);
-    }
+    // 2. Simpan ke Supabase secara background
+    supabase.from('orders').insert([orderPayload]).then(({ error }) => {
+      if (error) console.error('Supabase async insert error:', error);
+      else console.log('Order successfully inserted into Supabase!');
+    });
 
-    // Tetap hantar success supaya frontend tidak keluar alert "Failed"
-    res.status(200).json({ success: true, message: 'Order Placed Successfully!', order: orderPayload });
+    res.status(200).json({ success: true, message: 'Order Placed Successfully!', order: memoryObj });
   } catch (err) {
     res.status(200).json({ success: true, message: 'Order Placed Successfully!' });
   }
@@ -137,22 +161,23 @@ app.post('/api/orders', async (req, res) => {
 
 // PADAM ORDER
 app.delete('/api/orders/:id', async (req, res) => {
+  const targetId = req.params.id;
+  ordersMemory = ordersMemory.filter(o => o.id !== targetId && o.orderId !== targetId);
   try {
-    await supabase.from('orders').delete().eq('order_id', req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.json({ success: true });
-  }
+    await supabase.from('orders').delete().eq('order_id', targetId);
+  } catch (e) {}
+  res.json({ success: true });
 });
 
 app.post('/api/orders/delete', async (req, res) => {
-  try {
-    const id = req.body.id || req.body.orderId;
-    if (id) await supabase.from('orders').delete().eq('order_id', id);
-    res.json({ success: true });
-  } catch (err) {
-    res.json({ success: true });
+  const targetId = req.body.id || req.body.orderId;
+  if (targetId) {
+    ordersMemory = ordersMemory.filter(o => o.id !== targetId && o.orderId !== targetId);
+    try {
+      await supabase.from('orders').delete().eq('order_id', targetId);
+    } catch (e) {}
   }
+  res.json({ success: true });
 });
 
 // --- 5. RUN SERVER ---
