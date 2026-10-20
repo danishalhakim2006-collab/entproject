@@ -62,15 +62,24 @@ function formatOrder(data) {
   };
 }
 
-// --- 3. ENDPOINT STOK ---
+// --- 3. ENDPOINT STOK (SUPPORT SEMUA VARIASI URL FRONTEND) ---
 app.get('/api/stock', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/stocks', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/products', (req, res) => res.json({ success: true, ...stockData }));
 
-app.post('/api/stock', (req, res) => {
-  if (req.body) stockData = { ...stockData, ...req.body };
-  res.json({ success: true, message: 'Stock updated!' });
-});
+const updateStockHandler = (req, res) => {
+  if (req.body) {
+    stockData = { ...stockData, ...req.body };
+  }
+  res.json({ success: true, message: 'Stock updated successfully!', stock: stockData });
+};
+
+app.post('/api/stock', updateStockHandler);
+app.put('/api/stock', updateStockHandler);
+app.post('/api/stocks', updateStockHandler);
+app.put('/api/stocks', updateStockHandler);
+app.post('/api/products', updateStockHandler);
+app.put('/api/products', updateStockHandler);
 
 // --- 4. ENDPOINT ORDERS (DISEPADUKAN DENGAN SUPABASE) ---
 
@@ -122,7 +131,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// PADAM ORDER DARI SUPABASE (3 LALUAN DELETE UNTUK FRONTEND)
+// PADAM ORDER DARI SUPABASE (PELBAGAI LALUAN DELETE)
 app.delete('/api/orders/:id', async (req, res) => {
   try {
     const targetId = String(req.params.id).trim();
