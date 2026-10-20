@@ -96,7 +96,7 @@ app.put('/api/stock', (req, res) => {
   res.json({ success: true, message: 'Stock updated successfully!' });
 });
 
-// --- 2. ENDPOINT ORDERS ---
+// --- 2. ENDPOINT ORDERS (BACA & SIMPAN) ---
 app.get('/api/orders', (req, res) => {
   res.json(orders);
 });
@@ -107,24 +107,48 @@ app.post('/api/orders', (req, res) => {
   res.status(200).json({ success: true, message: 'Order berjaya disimpan!', order: newOrder });
 });
 
-// DIPERBAIKI: Endpoint Delete pesanan (Menyokong ID teks, nombor, atau indeks baris)
-app.delete('/api/orders/:id', (req, res) => {
-  const targetId = String(req.params.id).trim();
-  
-  const initialLength = orders.length;
-  orders = orders.filter((o, index) => {
-    const oId = String(o.id || '').trim();
-    const oOrderId = String(o.orderId || '').trim();
-    const oIndex = String(index);
-    
-    // Padankan dengan ID, OrderID, atau kedudukan indeks baris
-    return oId !== targetId && oOrderId !== targetId && oIndex !== targetId;
-  });
+// --- 3. ENDPOINT DELETE SUPER LENGKAP (TANGKAP SEMUA CARA FRONTEND DELETE) ---
 
-  res.json({ success: true, message: 'Order deleted successfully' });
+// Cara A: DELETE /api/orders/:id
+app.delete('/api/orders/:id', (req, res) => {
+  const target = String(req.params.id).trim();
+  orders = orders.filter((o, idx) => {
+    return String(o.id) !== target && 
+           String(o.orderId) !== target && 
+           String(idx) !== target &&
+           String(o.customerName) !== target;
+  });
+  res.json({ success: true, message: 'Deleted successfully' });
 });
 
-// --- 3. RUN SERVER ---
+// Cara B: DELETE /api/orders (guna query / body)
+app.delete('/api/orders', (req, res) => {
+  const target = String(req.query.id || req.body.id || req.body.orderId || req.body.index).trim();
+  if (target) {
+    orders = orders.filter((o, idx) => {
+      return String(o.id) !== target && 
+             String(o.orderId) !== target && 
+             String(idx) !== target;
+    });
+  } else {
+    // Jika tiada param, padangkan semua order kosong / corrupted
+    orders = orders.filter(o => o.customerName && o.customerName !== 'N/A');
+  }
+  res.json({ success: true, message: 'Deleted successfully' });
+});
+
+// Cara C: POST /api/orders/delete (sesetengah frontend lama guna POST untuk delete)
+app.post('/api/orders/delete', (req, res) => {
+  const target = String(req.body.id || req.body.orderId || req.body.index).trim();
+  orders = orders.filter((o, idx) => {
+    return String(o.id) !== target && 
+           String(o.orderId) !== target && 
+           String(idx) !== target;
+  });
+  res.json({ success: true, message: 'Deleted successfully' });
+});
+
+// --- 4. RUN SERVER ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server Velvet Delishé berjalan di port ${PORT}`);
