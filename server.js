@@ -3,13 +3,13 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-app.use(express.json());
-app.use(express.static('public')); // Atau folder frontend kau
 
-// Path ke fail orders.json
+app.use(express.json());
+// Membenarkan Render baca terus fail HTML/CSS dari main directory projek kau
+app.use(express.static(__dirname));
+
 const filePath = path.join(__dirname, 'orders.json');
 
-// Fungsi pembantu: Baca order dari fail
 function getOrders() {
   if (!fs.existsSync(filePath)) {
     return [];
@@ -22,29 +22,27 @@ function getOrders() {
   }
 }
 
-// Fungsi pembantu: Simpan order ke fail
 function saveOrders(orders) {
   fs.writeFileSync(filePath, JSON.stringify(orders, null, 2));
 }
 
-// 1. API bila customer hantar form order
+// Route bila orang hantar order baru
 app.post('/api/orders', (req, res) => {
   const newOrder = req.body;
-  const orders = getOrders(); // Baca order lama dari orders.json
+  const orders = getOrders();
   
-  orders.push(newOrder);      // Tambah order baru
-  saveOrders(orders);         // Tulis & simpan terus ke fail orders.json
+  orders.push(newOrder);
+  saveOrders(orders);
   
   res.status(200).json({ success: true, message: 'Order berjaya disimpan!' });
 });
 
-// 2. API bila kau buka Admin Dashboard nak tengok senarai order
+// Route bila kau buka admin dashboard
 app.get('/api/orders', (req, res) => {
-  const orders = getOrders(); // Baca dari orders.json
+  const orders = getOrders();
   res.json(orders);
 });
 
-// Port server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server berjalan di port ${PORT}`);
