@@ -1,159 +1,164 @@
 const express = require('express');
+const { createClient } = require('@supabase/supabase-js');
 const app = express();
 
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Data stok semasa (dikemaskini secara live)
+// --- 1. SAMBUNGAN SUPABASE ---
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://xdwaqiowenxwdfifskip.supabase.co";
+const SUPABASE_KEY = process.env.SUPABASE_KEY || "sb_publishable_n0KbWh2C2prsA3JfmJTFfA_h1KK5Be6";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Data Stok Semasa (Sementara dalam RAM)
 let stockData = {
   cake: 38,
   combo: 15,
   triple: 10
 };
 
-let orders = [];
-
-// --- FUNGSI FORMAT ORDER & AUTO-TOLAK STOK ---
+// --- 2. FUNGSI FORMAT ORDER ---
 function formatOrder(data) {
   const now = new Date();
   const formattedDate = data.date || data.createdAt || data.dateTime || now.toLocaleString('en-GB', { timeZone: 'Asia/Kuala_Lumpur' });
   const orderId = String(data.id || data.orderId || 'ORD-' + Math.floor(1000 + Math.random() * 9000)).trim();
 
-  // 1. Tangkap items dari pelbagai format frontend
   let itemsFormatted = '';
   const rawItems = data.itemsOrdered || data.orderedItems || data.items || data.cart || data.products || data.orderItems || data.item || data.orderDetails;
 
   if (Array.isArray(rawItems) && rawItems.length > 0) {
     itemsFormatted = rawItems.map(item => {
       if (typeof item === 'string') return item;
-      const name = item.name || item.productName || item.title || item.item || item.type || 'Product';
-      const qty = item.quantity || item.qty || item.count || 1;
+      const name = item.name || item.productName || item.title || item.item || 'Product';
+      const qty = item.quantity || item.qty || 1;
       return `${name} (x${qty})`;
     }).join(', ');
   } else if (typeof rawItems === 'string' && rawItems.trim() !== '' && rawItems !== 'undefined') {
     itemsFormatted = rawItems;
-  } else if (rawItems && typeof rawItems === 'object' && Object.keys(rawItems).length > 0) {
-    itemsFormatted = Object.entries(rawItems)
-      .map(([key, val]) => `${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`)
-      .join(', ');
-  }
-
-  // 2. Jika item dihantar sebagai kuantiti spesifik
-  let cakeQty = parseInt(data.cake || data.cakeQty || data.chocCake || 0);
-  let comboQty = parseInt(data.combo || data.comboQty || 0);
-  let tripleQty = parseInt(data.triple || data.tripleQty || 0);
-
-  if (!itemsFormatted || itemsFormatted === 'undefined' || itemsFormatted === 'N/A') {
+  } else {
     let details = [];
+    let cakeQty = parseInt(data.cake || data.cakeQty || data.chocCake || 0);
+    let comboQty = parseInt(data.combo || data.comboQty || 0);
+    let tripleQty = parseInt(data.triple || data.tripleQty || 0);
+
     if (cakeQty > 0) details.push(`Choc Moist Cake (x${cakeQty})`);
     if (comboQty > 0) details.push(`Hokkaido Combo 2pcs (x${comboQty})`);
     if (tripleQty > 0) details.push(`Hokkaido Triple 3pcs (x${tripleQty})`);
-    
-    if (details.length > 0) {
-      itemsFormatted = details.join(', ');
-    } else {
-      itemsFormatted = data.summary || data.note || data.description || 'Order Received';
-    }
+
+    itemsFormatted = details.length > 0 ? details.join(', ') : (data.summary || data.note || 'Order Received');
   }
 
-  // 3. Auto tolak stok
-  if (cakeQty > 0) stockData.cake = Math.max(0, stockData.cake - cakeQty);
-  if (comboQty > 0) stockData.combo = Math.max(0, stockData.combo - comboQty);
-  if (tripleQty > 0) stockData.triple = Math.max(0, stockData.triple - tripleQty);
-
-  // 4. Return objek penuh dengan SEMUA kunci alternatif
   return {
-    ...data,
-    id: orderId,
-    orderId: orderId,
+    order_id: orderId,
     date: formattedDate,
-    dateTime: formattedDate,
-    createdAt: formattedDate,
-    customerName: data.customerName || data.name || data.fullName || 'N/A',
+    customer_name: data.customerName || data.name || data.fullName || 'N/A',
     phone: data.phone || data.phoneNumber || data.contact || 'N/A',
     address: data.address || data.location || 'N/A',
-    
-    itemsOrdered: itemsFormatted,
-    orderedItems: itemsFormatted,
-    items: itemsFormatted,
-    orderItems: itemsFormatted,
-    cart: itemsFormatted,
-    products: itemsFormatted,
-    item: itemsFormatted,
-    orderDetails: itemsFormatted,
-
+    items_ordered: itemsFormatted,
     total: data.total || data.totalAmount || data.price || '0.00',
     payment: data.payment || data.paymentMethod || 'COD (Cash)',
     receipt: data.receipt || data.receiptUrl || 'N/A'
   };
 }
 
-// --- 1. ENDPOINT STOK (GET, POST, PUT) ---
+// --- 3. ENDPOINT STOK ---
 app.get('/api/stock', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/stocks', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/products', (req, res) => res.json({ success: true, ...stockData }));
 
 app.post('/api/stock', (req, res) => {
   if (req.body) stockData = { ...stockData, ...req.body };
-  res.json({ success: true, message: 'Stock updated successfully!' });
-});
-app.post('/api/stock/update', (req, res) => {
-  if (req.body) stockData = { ...stockData, ...req.body };
-  res.json({ success: true, message: 'Stock updated successfully!' });
-});
-app.put('/api/stock', (req, res) => {
-  if (req.body) stockData = { ...stockData, ...req.body };
-  res.json({ success: true, message: 'Stock updated successfully!' });
+  res.json({ success: true, message: 'Stock updated!' });
 });
 
-// --- 2. ENDPOINT ORDERS ---
-app.get('/api/orders', (req, res) => {
-  res.json(orders);
-});
+// --- 4. ENDPOINT ORDERS (DISEPADUKAN DENGAN SUPABASE) ---
 
-app.post('/api/orders', (req, res) => {
-  const newOrder = formatOrder(req.body);
-  orders.push(newOrder);
-  res.status(200).json({ success: true, message: 'Order berjaya disimpan!', order: newOrder });
-});
+// BACA KESEMUA ORDER DARI SUPABASE
+app.get('/api/orders', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('id', { ascending: false });
 
-// --- 3. ENDPOINT DELETE LENGKAP (SEMUA VARIASI LALUAN) ---
-app.delete('/api/orders/:id', (req, res) => {
-  const target = String(req.params.id).trim();
-  orders = orders.filter((o, idx) => {
-    return String(o.id || '').trim() !== target && 
-           String(o.orderId || '').trim() !== target && 
-           String(idx) !== target;
-  });
-  res.json({ success: true, message: 'Deleted successfully' });
-});
+    if (error) throw error;
 
-app.delete('/api/orders', (req, res) => {
-  const target = String(req.query.id || req.body.id || req.body.orderId || req.body.index || '').trim();
-  if (target) {
-    orders = orders.filter((o, idx) => {
-      return String(o.id || '').trim() !== target && 
-             String(o.orderId || '').trim() !== target && 
-             String(idx) !== target;
-    });
-  } else {
-    // Kalau tiada param, bersihkan rekod terbakar/undefined
-    orders = orders.filter(o => o.customerName && o.customerName !== 'N/A');
+    const formattedOrders = (data || []).map(o => ({
+      id: o.order_id,
+      orderId: o.order_id,
+      date: o.date,
+      customerName: o.customer_name,
+      phone: o.phone,
+      address: o.address,
+      itemsOrdered: o.items_ordered,
+      total: o.total,
+      payment: o.payment,
+      receipt: o.receipt
+    }));
+
+    res.json(formattedOrders);
+  } catch (err) {
+    console.error('Error fetching orders:', err);
+    res.status(500).json({ error: 'Gagal ambil data orders dari Supabase' });
   }
-  res.json({ success: true, message: 'Deleted successfully' });
 });
 
-app.post('/api/orders/delete', (req, res) => {
-  const target = String(req.body.id || req.body.orderId || req.body.index || '').trim();
-  orders = orders.filter((o, idx) => {
-    return String(o.id || '').trim() !== target && 
-           String(o.orderId || '').trim() !== target && 
-           String(idx) !== target;
-  });
-  res.json({ success: true, message: 'Deleted successfully' });
+// SIMPAN ORDER BARU KE SUPABASE
+app.post('/api/orders', async (req, res) => {
+  try {
+    const orderPayload = formatOrder(req.body);
+
+    const { data, error } = await supabase
+      .from('orders')
+      .insert([orderPayload]);
+
+    if (error) throw error;
+
+    res.status(200).json({ success: true, message: 'Order berjaya disimpan secara kekal di Supabase!', order: orderPayload });
+  } catch (err) {
+    console.error('Error saving order:', err);
+    res.status(500).json({ error: 'Gagal simpan order ke Supabase' });
+  }
 });
 
-// --- 4. LISTEN PORT ---
+// PADAM ORDER DARI SUPABASE (3 LALUAN DELETE UNTUK FRONTEND)
+app.delete('/api/orders/:id', async (req, res) => {
+  try {
+    const targetId = String(req.params.id).trim();
+    const { error } = await supabase.from('orders').delete().eq('order_id', targetId);
+    if (error) throw error;
+    res.json({ success: true, message: 'Order berjaya dipadam secara kekal dari Supabase' });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal padam order dari Supabase' });
+  }
+});
+
+app.delete('/api/orders', async (req, res) => {
+  try {
+    const targetId = String(req.query.id || req.body.id || req.body.orderId || '').trim();
+    if (targetId) {
+      await supabase.from('orders').delete().eq('order_id', targetId);
+    }
+    res.json({ success: true, message: 'Deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal padam order' });
+  }
+});
+
+app.post('/api/orders/delete', async (req, res) => {
+  try {
+    const targetId = String(req.body.id || req.body.orderId || '').trim();
+    if (targetId) {
+      await supabase.from('orders').delete().eq('order_id', targetId);
+    }
+    res.json({ success: true, message: 'Deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal padam order' });
+  }
+});
+
+// --- 5. RUN SERVER ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server Velvet Delishé berjalan di port ${PORT}`);
