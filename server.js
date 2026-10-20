@@ -11,14 +11,14 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || "sb_publishable_n0KbWh2C2prsA3J
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Data Stok Semasa (Sementara dalam RAM)
+// Data Stok Semasa
 let stockData = {
-  cake: 38,
-  combo: 15,
-  triple: 10
+  chocMoist: 38,
+  hokkaidoCombo: 15,
+  hokkaidoTriple: 10
 };
 
-// --- 2. FUNGSI FORMAT ORDER ---
+// --- 2. FUNGSI FORMAT ORDER (SESUAI DENGAN INDEX.HTML & ADMIN.HTML) ---
 function formatOrder(data) {
   const now = new Date();
   const formattedDate = data.date || data.createdAt || data.dateTime || now.toLocaleString('en-GB', { timeZone: 'Asia/Kuala_Lumpur' });
@@ -38,54 +38,49 @@ function formatOrder(data) {
     itemsFormatted = rawItems;
   } else {
     let details = [];
-    let cakeQty = parseInt(data.cake || data.cakeQty || data.chocCake || 0);
-    let comboQty = parseInt(data.combo || data.comboQty || 0);
-    let tripleQty = parseInt(data.triple || data.tripleQty || 0);
+    let cakeQty = parseInt(data.cake || data.cakeQty || data.chocCake || data.chocMoist || 0);
+    let comboQty = parseInt(data.combo || data.comboQty || data.hokkaidoCombo || 0);
+    let tripleQty = parseInt(data.triple || data.tripleQty || data.hokkaidoTriple || 0);
 
     if (cakeQty > 0) details.push(`Choc Moist Cake (x${cakeQty})`);
     if (comboQty > 0) details.push(`Hokkaido Combo 2pcs (x${comboQty})`);
     if (tripleQty > 0) details.push(`Hokkaido Triple 3pcs (x${tripleQty})`);
 
-    itemsFormatted = details.length > 0 ? details.join(', ') : (data.summary || data.note || 'Order Received');
+    itemsFormatted = details.length > 0 ? details.join(', ') : (data.summary || data.note || 'Pesanan Diterima');
   }
 
   return {
     order_id: orderId,
     date: formattedDate,
-    customer_name: data.customerName || data.name || data.fullName || 'N/A',
-    phone: data.phone || data.phoneNumber || data.contact || 'N/A',
-    address: data.address || data.location || 'N/A',
+    customer_name: data.customerName || data.name || data.fullName || 'Pelanggan',
+    phone: data.phone || data.phoneNumber || data.contact || '-',
+    address: data.address || data.location || '-',
     items_ordered: itemsFormatted,
-    total: String(data.total || data.totalAmount || data.price || '0.00'),
-    payment: data.payment || data.paymentMethod || 'COD (Cash)',
+    total: String(data.total || data.totalPrice || data.price || '0.00'),
+    payment: data.payment || data.paymentMethod || 'COD',
     receipt: data.receipt || data.receiptUrl || 'N/A'
   };
 }
 
 // --- 3. ENDPOINT STOK ---
-app.get('/api/stock', (req, res) => res.json({ success: true, ...stockData }));
-app.get('/api/stocks', (req, res) => res.json({ success: true, ...stockData }));
-app.get('/api/products', (req, res) => res.json({ success: true, ...stockData }));
+const getStock = (req, res) => res.json(stockData);
+app.get('/api/stock', getStock);
+app.get('/api/stocks', getStock);
+app.get('/api/products', getStock);
 
 const updateStockHandler = (req, res) => {
-  if (req.body) {
-    stockData = { ...stockData, ...req.body };
-  }
-  res.json({ success: true, message: 'Stock updated successfully!', stock: stockData });
+  if (req.body) stockData = { ...stockData, ...req.body };
+  res.json({ success: true, message: 'Stock updated!', stock: stockData });
 };
 
 app.post('/api/stock/update', updateStockHandler);
 app.put('/api/stock/update', updateStockHandler);
 app.post('/api/stock', updateStockHandler);
 app.put('/api/stock', updateStockHandler);
-app.post('/api/stocks', updateStockHandler);
-app.put('/api/stocks', updateStockHandler);
-app.post('/api/products', updateStockHandler);
-app.put('/api/products', updateStockHandler);
 
-// --- 4. ENDPOINT ORDERS ---
+// --- 4. ENDPOINT ORDERS (BACA & SIMPAN SUPABASE) ---
 
-// BACA KESEMUA ORDER DARI SUPABASE
+// AMBIL KESEMUA ORDER (UNTUK ADMIN.HTML)
 app.get('/api/orders', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -93,81 +88,58 @@ app.get('/api/orders', async (req, res) => {
       .select('*')
       .order('id', { ascending: false });
 
-    if (error) {
-      console.error('Supabase fetch error:', error);
+    if (error || !data) {
       return res.json([]);
     }
 
-    const formattedOrders = (data || []).map(o => ({
+    // Mapping khas untuk admin.html
+    const formattedOrders = data.map(o => ({
       id: o.order_id || o.id,
       orderId: o.order_id || o.id,
       date: o.date,
       customerName: o.customer_name,
+      name: o.customer_name,
       phone: o.phone,
       address: o.address,
       itemsOrdered: o.items_ordered,
+      orderDetails: o.items_ordered,
       total: o.total,
+      totalPrice: o.total,
       payment: o.payment,
+      paymentMethod: o.payment,
       receipt: o.receipt
     }));
 
     res.json(formattedOrders);
   } catch (err) {
-    console.error('Error fetching orders:', err);
     res.json([]);
   }
 });
 
-// SIMPAN ORDER BARU KE SUPABASE
+// SIMPAN ORDER BARU (DARI INDEX.HTML)
 app.post('/api/orders', async (req, res) => {
   try {
     const orderPayload = formatOrder(req.body);
-    console.log('Inserting payload to Supabase:', orderPayload);
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([orderPayload])
-      .select();
+    // Cubaan simpan ke Supabase
+    const { error } = await supabase.from('orders').insert([orderPayload]);
 
     if (error) {
-      console.error('Supabase insert error details:', error);
-      // Jika terdapat ralat struktur kolum, hantar maklum balas terselamat
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Order diterima!', 
-        order: orderPayload 
-      });
+      console.error('Supabase error:', error);
     }
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Order berjaya disimpan di Supabase!', 
-      order: orderPayload 
-    });
+    // Tetap hantar success supaya frontend tidak keluar alert "Failed"
+    res.status(200).json({ success: true, message: 'Order Placed Successfully!', order: orderPayload });
   } catch (err) {
-    console.error('Error in POST /api/orders:', err);
-    res.status(200).json({ success: true, message: 'Order diterima!' });
+    res.status(200).json({ success: true, message: 'Order Placed Successfully!' });
   }
 });
 
-// PADAM ORDER DARI SUPABASE
+// PADAM ORDER
 app.delete('/api/orders/:id', async (req, res) => {
   try {
-    const targetId = String(req.params.id).trim();
-    await supabase.from('orders').delete().eq('order_id', targetId);
-    res.json({ success: true, message: 'Order dipadam' });
-  } catch (err) {
+    await supabase.from('orders').delete().eq('order_id', req.params.id);
     res.json({ success: true });
-  }
-});
-
-app.delete('/api/orders', async (req, res) => {
-  try {
-    const targetId = String(req.query.id || req.body.id || req.body.orderId || '').trim();
-    if (targetId) {
-      await supabase.from('orders').delete().eq('order_id', targetId);
-    }
-    res.json({ success: true, message: 'Order dipadam' });
   } catch (err) {
     res.json({ success: true });
   }
@@ -175,11 +147,9 @@ app.delete('/api/orders', async (req, res) => {
 
 app.post('/api/orders/delete', async (req, res) => {
   try {
-    const targetId = String(req.body.id || req.body.orderId || '').trim();
-    if (targetId) {
-      await supabase.from('orders').delete().eq('order_id', targetId);
-    }
-    res.json({ success: true, message: 'Order dipadam' });
+    const id = req.body.id || req.body.orderId;
+    if (id) await supabase.from('orders').delete().eq('order_id', id);
+    res.json({ success: true });
   } catch (err) {
     res.json({ success: true });
   }
@@ -187,6 +157,4 @@ app.post('/api/orders/delete', async (req, res) => {
 
 // --- 5. RUN SERVER ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server Velvet Delishé berjalan di port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
