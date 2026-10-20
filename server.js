@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Data stok semasa
+// Data stok semasa (dikemaskini secara live)
 let stockData = {
   cake: 38,
   combo: 15,
@@ -13,14 +13,13 @@ let stockData = {
 
 let orders = [];
 
-// --- FUNGSI FORMAT DATA & TOLAK STOK AUTOMATIK ---
+// --- FUNGSI FORMAT ORDER & AUTO-TOLAK STOK ---
 function formatOrder(data) {
   const now = new Date();
   const formattedDate = data.date || data.createdAt || data.dateTime || now.toLocaleString('en-GB', { timeZone: 'Asia/Kuala_Lumpur' });
-  
-  // Ambil ID jika ada, atau generate baru
   const orderId = String(data.id || data.orderId || 'ORD-' + Math.floor(1000 + Math.random() * 9000)).trim();
 
+  // 1. Tangkap items dari pelbagai format frontend
   let itemsFormatted = '';
   const rawItems = data.itemsOrdered || data.orderedItems || data.items || data.cart || data.products || data.orderItems || data.item || data.orderDetails;
 
@@ -39,7 +38,7 @@ function formatOrder(data) {
       .join(', ');
   }
 
-  // Auto tolak stok berdasarkan input
+  // 2. Jika item dihantar sebagai kuantiti spesifik
   let cakeQty = parseInt(data.cake || data.cakeQty || data.chocCake || 0);
   let comboQty = parseInt(data.combo || data.comboQty || 0);
   let tripleQty = parseInt(data.triple || data.tripleQty || 0);
@@ -57,11 +56,12 @@ function formatOrder(data) {
     }
   }
 
-  // Tolak stok secara automatik di RAM
+  // 3. Auto tolak stok
   if (cakeQty > 0) stockData.cake = Math.max(0, stockData.cake - cakeQty);
   if (comboQty > 0) stockData.combo = Math.max(0, stockData.combo - comboQty);
   if (tripleQty > 0) stockData.triple = Math.max(0, stockData.triple - tripleQty);
 
+  // 4. Return objek penuh dengan SEMUA kunci alternatif
   return {
     ...data,
     id: orderId,
@@ -88,7 +88,7 @@ function formatOrder(data) {
   };
 }
 
-// --- 1. ENDPOINT STOK ---
+// --- 1. ENDPOINT STOK (GET, POST, PUT) ---
 app.get('/api/stock', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/stocks', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/products', (req, res) => res.json({ success: true, ...stockData }));
@@ -97,12 +97,10 @@ app.post('/api/stock', (req, res) => {
   if (req.body) stockData = { ...stockData, ...req.body };
   res.json({ success: true, message: 'Stock updated successfully!' });
 });
-
 app.post('/api/stock/update', (req, res) => {
   if (req.body) stockData = { ...stockData, ...req.body };
   res.json({ success: true, message: 'Stock updated successfully!' });
 });
-
 app.put('/api/stock', (req, res) => {
   if (req.body) stockData = { ...stockData, ...req.body };
   res.json({ success: true, message: 'Stock updated successfully!' });
@@ -119,33 +117,43 @@ app.post('/api/orders', (req, res) => {
   res.status(200).json({ success: true, message: 'Order berjaya disimpan!', order: newOrder });
 });
 
-// --- 3. ENDPOINT DELETE YANG MENYOKONG SEMUA FORMAT ID FRONTEND ---
+// --- 3. ENDPOINT DELETE LENGKAP (SEMUA VARIASI LALUAN) ---
 app.delete('/api/orders/:id', (req, res) => {
-  const targetId = String(req.params.id).trim();
-  
-  orders = orders.filter((o, index) => {
-    const oId = String(o.id || '').trim();
-    const oOrderId = String(o.orderId || '').trim();
-    const oIndex = String(index);
-    
-    // Padankan dengan ID, OrderID, atau index baris
-    return oId !== targetId && oOrderId !== targetId && oIndex !== targetId;
+  const target = String(req.params.id).trim();
+  orders = orders.filter((o, idx) => {
+    return String(o.id || '').trim() !== target && 
+           String(o.orderId || '').trim() !== target && 
+           String(idx) !== target;
   });
-
   res.json({ success: true, message: 'Deleted successfully' });
 });
 
 app.delete('/api/orders', (req, res) => {
-  const targetId = String(req.query.id || req.body.id || req.body.orderId || '').trim();
-  if (targetId) {
-    orders = orders.filter((o, idx) => String(o.id) !== targetId && String(o.orderId) !== targetId && String(idx) !== targetId);
+  const target = String(req.query.id || req.body.id || req.body.orderId || req.body.index || '').trim();
+  if (target) {
+    orders = orders.filter((o, idx) => {
+      return String(o.id || '').trim() !== target && 
+             String(o.orderId || '').trim() !== target && 
+             String(idx) !== target;
+    });
   } else {
-    orders = []; // Kalau kosong, reset habis senarai order
+    // Kalau tiada param, bersihkan rekod terbakar/undefined
+    orders = orders.filter(o => o.customerName && o.customerName !== 'N/A');
   }
   res.json({ success: true, message: 'Deleted successfully' });
 });
 
-// --- 4. RUN SERVER ---
+app.post('/api/orders/delete', (req, res) => {
+  const target = String(req.body.id || req.body.orderId || req.body.index || '').trim();
+  orders = orders.filter((o, idx) => {
+    return String(o.id || '').trim() !== target && 
+           String(o.orderId || '').trim() !== target && 
+           String(idx) !== target;
+  });
+  res.json({ success: true, message: 'Deleted successfully' });
+});
+
+// --- 4. LISTEN PORT ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server Velvet Delishé berjalan di port ${PORT}`);
