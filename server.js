@@ -1,43 +1,60 @@
 const express = require('express');
 const app = express();
 
-// Middleware untuk parse JSON dari frontend
 app.use(express.json());
-
-// Serving static files dari root directory
 app.use(express.static(__dirname));
 
-// Array sementara dalam RAM untuk tempahan (asal)
-let orders = [];
-
-// 1. ENDPOINT STOK & PRODUK (Selesaikan masalah Loading)
-const defaultStock = {
-  success: true,
-  stock: 50,
-  available: 50,
-  products: [
-    { id: 1, name: 'Velvet Delishé', stock: 50, price: 8.00 }
-  ]
+// Data stok dalam RAM
+let stockData = {
+  cake: 50,
+  combo: 50,
+  triple: 50
 };
 
-app.get('/api/stock', (req, res) => res.json(defaultStock));
-app.get('/api/stocks', (req, res) => res.json(defaultStock));
-app.get('/api/products', (req, res) => res.json(defaultStock));
-app.get('/api/inventory', (req, res) => res.json(defaultStock));
+let orders = [];
 
-// 2. ENDPOINT ORDERS (Asal)
+// --- 1. ENDPOINT STOK (GET & POST/PUT) ---
+
+// Untuk paparan stok di kedai & admin dashboard
+app.get('/api/stock', (req, res) => res.json({ success: true, ...stockData }));
+app.get('/api/stocks', (req, res) => res.json({ success: true, ...stockData }));
+app.get('/api/products', (req, res) => res.json({ success: true, ...stockData }));
+
+// Untuk butang 'Save Stock' kat admin.html
+app.post('/api/stock', (req, res) => {
+  if (req.body) {
+    stockData = { ...stockData, ...req.body };
+  }
+  res.json({ success: true, message: 'Stock updated successfully!' });
+});
+
+app.post('/api/stock/update', (req, res) => {
+  if (req.body) {
+    stockData = { ...stockData, ...req.body };
+  }
+  res.json({ success: true, message: 'Stock updated successfully!' });
+});
+
+app.put('/api/stock', (req, res) => {
+  if (req.body) {
+    stockData = { ...stockData, ...req.body };
+  }
+  res.json({ success: true, message: 'Stock updated successfully!' });
+});
+
+// --- 2. ENDPOINT ORDERS ---
+
 app.get('/api/orders', (req, res) => {
   res.json(orders);
 });
 
 app.post('/api/orders', (req, res) => {
-  const newOrder = req.body;
-  orders.push(newOrder);
-  res.status(200).json({ success: true, message: 'Order berjaya diterima!' });
+  orders.push(req.body);
+  res.status(200).json({ success: true, message: 'Order berjaya disimpan!' });
 });
 
-// 3. LISTEN PORT
+// --- 3. LISTEN PORT ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server Velvet Delishé berjalan di port ${PORT}`);
+  console.log(`Server berjalan di port ${PORT}`);
 });
