@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Data stok sementara dalam RAM (Live Stock Management)
+// Data stok
 let stockData = {
   cake: 38,
   combo: 15,
@@ -13,23 +13,20 @@ let stockData = {
 
 let orders = [];
 
-// --- FUNGSI PEMBANTU: FORMAT DATA ORDER (ELAK UNDEFINED) ---
+// --- FUNGSI FORMAT ORDER (MENYELESAIKAN UNDEFINED PADA ITEMS ORDERED) ---
 function formatOrder(data) {
-  // Masa & Tarikh automatik jika frontend tak hantar
   const now = new Date();
   const formattedDate = data.date || data.createdAt || data.dateTime || now.toLocaleString('en-GB', { timeZone: 'Asia/Kuala_Lumpur' });
-
-  // Order ID automatik
   const orderId = data.id || data.orderId || 'ORD-' + Math.floor(1000 + Math.random() * 9000);
 
-  // Parse & format senarai barangan (Items Ordered)
+  // Cari data barang dari frontend
   let itemsFormatted = 'N/A';
-  const rawItems = data.itemsOrdered || data.items || data.cart || data.products || data.orderItems;
+  const rawItems = data.itemsOrdered || data.orderedItems || data.items || data.cart || data.products || data.orderItems || data.item;
 
   if (Array.isArray(rawItems)) {
     itemsFormatted = rawItems.map(item => {
       if (typeof item === 'string') return item;
-      const name = item.name || item.productName || item.title || 'Item';
+      const name = item.name || item.productName || item.title || item.item || 'Cake/Combo';
       const qty = item.quantity || item.qty || item.count || 1;
       return `${name} (x${qty})`;
     }).join(', ');
@@ -37,8 +34,16 @@ function formatOrder(data) {
     itemsFormatted = rawItems;
   } else if (rawItems && typeof rawItems === 'object') {
     itemsFormatted = JSON.stringify(rawItems);
+  } else {
+    // Kalau frontend hantar terus kuantiti kek dalam body (cth: cakeQty, comboQty)
+    let details = [];
+    if (data.cake || data.cakeQty || data.chocCake) details.push(`Choc Moist Cake (x${data.cake || data.cakeQty || data.chocCake})`);
+    if (data.combo || data.comboQty) details.push(`Hokkaido Combo (x${data.combo || data.comboQty})`);
+    if (data.triple || data.tripleQty) details.push(`Hokkaido Triple (x${data.triple || data.tripleQty})`);
+    if (details.length > 0) itemsFormatted = details.join(', ');
   }
 
+  // Masukkan SEMUA kemungkinan nama kunci yang dicari oleh admin.html
   return {
     ...data,
     id: orderId,
@@ -49,21 +54,27 @@ function formatOrder(data) {
     customerName: data.customerName || data.name || data.fullName || 'N/A',
     phone: data.phone || data.phoneNumber || data.contact || 'N/A',
     address: data.address || data.location || 'N/A',
+    
+    // Semua variasi nama key untuk Items Ordered:
     itemsOrdered: itemsFormatted,
+    orderedItems: itemsFormatted,
     items: itemsFormatted,
+    orderItems: itemsFormatted,
+    cart: itemsFormatted,
+    products: itemsFormatted,
+    item: itemsFormatted,
+
     total: data.total || data.totalAmount || data.price || '0.00',
     payment: data.payment || data.paymentMethod || 'COD (Cash)',
     receipt: data.receipt || data.receiptUrl || 'N/A'
   };
 }
 
-// --- 1. ENDPOINT STOK (BACA & KEMAS KINI STOK ADMIN) ---
-
+// --- 1. ENDPOINT STOK ---
 app.get('/api/stock', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/stocks', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/products', (req, res) => res.json({ success: true, ...stockData }));
 
-// Untuk butang 'Save Stock' di admin.html
 app.post('/api/stock', (req, res) => {
   if (req.body) stockData = { ...stockData, ...req.body };
   res.json({ success: true, message: 'Stock updated successfully!' });
@@ -79,10 +90,8 @@ app.put('/api/stock', (req, res) => {
   res.json({ success: true, message: 'Stock updated successfully!' });
 });
 
-// --- 2. ENDPOINT ORDERS (ADMIN & FRONTEND) ---
-
+// --- 2. ENDPOINT ORDERS ---
 app.get('/api/orders', (req, res) => {
-  // Pulangkan semua order yang dah diformat
   res.json(orders);
 });
 
@@ -92,14 +101,13 @@ app.post('/api/orders', (req, res) => {
   res.status(200).json({ success: true, message: 'Order berjaya disimpan!', order: newOrder });
 });
 
-// Route untuk padam order bila tekan butang 'Delete'
 app.delete('/api/orders/:id', (req, res) => {
   const { id } = req.params;
   orders = orders.filter(o => o.id !== id && o.orderId !== id);
   res.json({ success: true, message: 'Order deleted successfully' });
 });
 
-// --- 3. RUN SERVER ---
+// --- 3. LISTEN PORT ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server Velvet Delishé berjalan di port ${PORT}`);
