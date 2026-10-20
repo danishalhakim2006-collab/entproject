@@ -62,7 +62,7 @@ function formatOrder(data) {
   };
 }
 
-// --- 3. ENDPOINT STOK (SUPPORT SEMUA VARIASI URL FRONTEND) ---
+// --- 3. ENDPOINT STOK (SUPPORT FRONTEND /api/stock/update) ---
 app.get('/api/stock', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/stocks', (req, res) => res.json({ success: true, ...stockData }));
 app.get('/api/products', (req, res) => res.json({ success: true, ...stockData }));
@@ -74,6 +74,8 @@ const updateStockHandler = (req, res) => {
   res.json({ success: true, message: 'Stock updated successfully!', stock: stockData });
 };
 
+app.post('/api/stock/update', updateStockHandler);
+app.put('/api/stock/update', updateStockHandler);
 app.post('/api/stock', updateStockHandler);
 app.put('/api/stock', updateStockHandler);
 app.post('/api/stocks', updateStockHandler);
@@ -131,7 +133,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// PADAM ORDER DARI SUPABASE (PELBAGAI LALUAN DELETE)
+// PADAM ORDER DARI SUPABASE
 app.delete('/api/orders/:id', async (req, res) => {
   try {
     const targetId = String(req.params.id).trim();
